@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.c520.likexiang.About
 import com.c520.likexiang.BuildConfig
 import com.c520.likexiang.R
 import com.c520.likexiang.data.CalendarInfo
@@ -239,6 +240,10 @@ fun SettingsScreen(vm: MainViewModel) {
                 }
                 CardDivider()
                 SettingRow("開放原始碼授權", "MIT・Apache 2.0・BSD") { dialog = SettingsDialog.LICENSES }
+                CardDivider()
+                SettingRow("聯繫作者", "寄信給作者", caption = About.CONTACT_TEXT) { About.mail(context, "曆刻響", BuildConfig.VERSION_NAME) }
+                CardDivider()
+                SettingRow("更多軟體", "到 C520 看看", caption = About.MORE_TEXT) { About.more(context) }
             }
             Spacer(Modifier.size(Tok.sXxl))
         }
