@@ -36,7 +36,7 @@ class FmtEnTest {
         assertEquals("Sun, Oct 11", Fmt.dateWithDow(d))
         assertEquals("Sunday", Fmt.weekday(d))
         assertEquals("S", Fmt.dowChar(d))
-        assertEquals("October 2026", Fmt.monthTitle(2026, 10, true))
+        assertEquals("Oct 2026", Fmt.monthTitle(2026, 10, true))
         assertEquals("Oct–Nov", Fmt.monthSpan(LocalDate.of(2026, 10, 26), LocalDate.of(2026, 11, 8), d))
         assertEquals("Dec 2026 – Jan 2027", Fmt.monthSpan(LocalDate.of(2026, 12, 30), LocalDate.of(2027, 1, 2), d))
     }

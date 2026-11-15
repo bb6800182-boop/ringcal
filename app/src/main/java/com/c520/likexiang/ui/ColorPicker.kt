@@ -56,7 +56,7 @@ import android.graphics.Color as AndroidColor
 data class Swatch(val name: String, val argb: Int?)
 
 /** 重點色的常用色：在預設的白底上不用調整（白字、當字用都有 4.5:1）。 */
-val ACCENT_SWATCHES = listOf(
+val ACCENT_SWATCHES get() = listOf(
     Swatch(L.t("預設（紫）", "Default (purple)"), null),
     Swatch(L.t("藍", "Blue"), 0xFF1A5FB4.toInt()),
     Swatch(L.t("青", "Teal"), 0xFF00707A.toInt()),
@@ -69,7 +69,7 @@ val ACCENT_SWATCHES = listOf(
 )
 
 /** 底色的常用色：淺色幾種、深色幾種。 */
-val CANVAS_SWATCHES = listOf(
+val CANVAS_SWATCHES get() = listOf(
     Swatch(L.t("預設（白）", "Default (white)"), null),
     Swatch(L.t("暖白", "Warm white"), 0xFFFBF8F1.toInt()),
     Swatch(L.t("淡灰", "Light gray"), 0xFFF1F3F4.toInt()),
@@ -82,7 +82,7 @@ val CANVAS_SWATCHES = listOf(
 )
 
 /** 日曆顏色的常用色：Google 月曆的 11 種行程顏色（名稱跟 Google 月曆 App 一樣）。 */
-val CALENDAR_SWATCHES = listOf(
+val CALENDAR_SWATCHES get() = listOf(
     Swatch(L.t("跟 Google 月曆一樣", "Same as Google Calendar"), null),
     Swatch(L.t("番茄紅", "Tomato"), 0xFFD50000.toInt()),
     Swatch(L.t("紅鶴色", "Flamingo"), 0xFFE67C73.toInt()),

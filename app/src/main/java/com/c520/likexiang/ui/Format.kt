@@ -42,8 +42,9 @@ object Fmt {
 
     fun monthTitle(year: Int, month: Int, showYear: Boolean): String = when {
         L.zh -> if (showYear) "${year}年${month}月" else "${month}月"
-        showYear -> "${monthName(month, TextStyle.FULL)} $year"
-        else -> monthName(month, TextStyle.FULL)
+        // 英文用縮寫（Nov）：全名在標題列會被擠成兩行
+        showYear -> "${monthName(month, TextStyle.SHORT)} $year"
+        else -> monthName(month, TextStyle.SHORT)
     }
 
     /** 「N 天」「N 週」檢視的標題只寫月份（「10月」「10–11月」），日期看格子；不是今年才加年份。 */

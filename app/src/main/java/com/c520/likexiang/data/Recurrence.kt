@@ -23,8 +23,11 @@ object Rfc5545 {
         if (allDay) "P${maxOf(1L, millis / DAY_MS)}D" else "P${maxOf(60L, millis / 1000)}S"
 }
 
-enum class Repeat(val label: String) {
-    NONE(L.t("不重複", "Doesn't repeat")), DAILY(L.t("每天", "Every day")), WEEKLY(L.t("每週", "Every week")), MONTHLY(L.t("每月", "Every month")), YEARLY(L.t("每年", "Every year"));
+enum class Repeat(private val zh: String, private val en: String) {
+    NONE("不重複", "Doesn't repeat"), DAILY("每天", "Every day"), WEEKLY("每週", "Every week"), MONTHLY("每月", "Every month"), YEARLY("每年", "Every year");
+
+    /** 每次用到才依目前的語言取字（enum 只初始化一次）。 */
+    val label: String get() = L.t(zh, en)
 
     fun toRrule(start: LocalDate): String? = when (this) {
         NONE -> null

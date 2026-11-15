@@ -128,11 +128,13 @@ fun ColorDot(argb: Int?, size: Dp = 16.dp) {
 }
 
 /** 自訂時間的單位。 */
-enum class TimeUnitChoice(val label: String, val minutes: Int) {
-    MINUTE(L.t("分鐘", "minutes"), 1),
-    HOUR(L.t("小時", "hours"), 60),
-    DAY(L.t("天", "days"), 24 * 60),
-    WEEK(L.t("週", "weeks"), 7 * 24 * 60),
+enum class TimeUnitChoice(private val zh: String, private val en: String, val minutes: Int) {
+    MINUTE("分鐘", "minutes", 1),
+    HOUR("小時", "hours", 60),
+    DAY("天", "days", 24 * 60),
+    WEEK("週", "weeks", 7 * 24 * 60);
+
+    val label: String get() = L.t(zh, en)
 }
 
 /** 輸入「幾分鐘／小時／天／週」，換算成分鐘；超過 [maxMinutes] 不給確定。 */

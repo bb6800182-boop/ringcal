@@ -107,7 +107,7 @@ private const val MAX_REMINDERS = 5
 private const val GOOGLE_ACCOUNT = "com.google"
 
 /** Google 帳號的行程顏色：名稱跟 Google 月曆 App 的繁中名稱一樣，順序也照它的選單。key 是 Colors 表的 key。 */
-private val GOOGLE_EVENT_COLORS = linkedMapOf(
+private val GOOGLE_EVENT_COLORS get() = linkedMapOf(
     "11" to L.t("番茄紅", "Tomato"),
     "4" to L.t("紅鶴色", "Flamingo"),
     "6" to L.t("橙橘色", "Tangerine"),
