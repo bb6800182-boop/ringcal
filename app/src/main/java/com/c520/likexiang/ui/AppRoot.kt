@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -121,7 +122,7 @@ private fun HomeScreen(vm: MainViewModel, mode: HomeMode, perms: PermState) {
     ) {
         Column(Modifier.fillMaxSize().background(Tok.canvas)) {
             if (!perms.alarmReady) {
-                Banner("有鬧鐘需要的權限或設定沒開，可能不會準時響", "去設定") { vm.navigate(Screen.Settings) }
+                Banner(L.t("有鬧鐘需要的權限或設定沒開，可能不會準時響", "Some permissions or settings that alarms need are off, so they may not ring on time"), L.t("去設定", "Fix")) { vm.navigate(Screen.Settings) }
             }
             Box(Modifier.weight(1f)) {
                 when (mode) {
@@ -156,14 +157,14 @@ private fun AppDrawer(vm: MainViewModel, mode: HomeMode, run: (() -> Unit) -> Un
                 modifier = Modifier.padding(horizontal = Tok.sSm, vertical = Tok.sXs).semantics { heading() },
             )
             NavigationDrawerItem(
-                label = { Text("行程", style = TypeTok.body) },
+                label = { Text(L.t("行程", "Agenda"), style = TypeTok.body) },
                 icon = { AppIcon(R.drawable.ic_list, null, size = 20.dp) },
                 selected = mode == HomeMode.AGENDA,
                 onClick = { run { vm.setHomeMode(HomeMode.AGENDA) } },
                 colors = colors,
             )
             NavigationDrawerItem(
-                label = { Text("日", style = TypeTok.body) },
+                label = { Text(L.t("日", "Day"), style = TypeTok.body) },
                 icon = { AppIcon(R.drawable.ic_clock, null, size = 20.dp) },
                 selected = false,
                 onClick = { run { vm.openToday() } },
@@ -177,7 +178,7 @@ private fun AppDrawer(vm: MainViewModel, mode: HomeMode, run: (() -> Unit) -> Un
                 colors = colors,
             )
             NavigationDrawerItem(
-                label = { Text("月", style = TypeTok.body) },
+                label = { Text(L.t("月", "Month"), style = TypeTok.body) },
                 icon = { AppIcon(R.drawable.ic_calendar, null, size = 20.dp) },
                 selected = mode == HomeMode.MONTH,
                 onClick = { run { vm.setHomeMode(HomeMode.MONTH) } },
@@ -193,13 +194,13 @@ private fun AppDrawer(vm: MainViewModel, mode: HomeMode, run: (() -> Unit) -> Un
             Spacer(Modifier.padding(top = Tok.sXs))
             Divider()
             Column(Modifier.padding(horizontal = Tok.sSm)) {
-                SectionTitle("顯示的日曆")
+                SectionTitle(L.t("顯示的日曆", "Calendars shown"))
                 CalendarToggles(calendars, settings.hiddenCalendarIds) { c, shown -> vm.toggleCalendar(c, shown) }
             }
             Spacer(Modifier.padding(top = Tok.sXs))
             Divider()
             NavigationDrawerItem(
-                label = { Text("鬧鐘清單", style = TypeTok.body) },
+                label = { Text(L.t("鬧鐘清單", "Alarms"), style = TypeTok.body) },
                 icon = { AppIcon(R.drawable.ic_alarm, null, size = 20.dp) },
                 selected = false,
                 onClick = { run { vm.navigate(Screen.Alarms) } },
@@ -207,7 +208,7 @@ private fun AppDrawer(vm: MainViewModel, mode: HomeMode, run: (() -> Unit) -> Un
                 modifier = Modifier.padding(top = Tok.sXs),
             )
             NavigationDrawerItem(
-                label = { Text("設定", style = TypeTok.body) },
+                label = { Text(L.t("設定", "Settings"), style = TypeTok.body) },
                 icon = { AppIcon(R.drawable.ic_settings, null, size = 20.dp) },
                 selected = false,
                 onClick = { run { vm.navigate(Screen.Settings) } },
@@ -231,20 +232,20 @@ private fun RingingBar(title: String, count: Int, snoozeMin: Int) {
         AppIcon(R.drawable.ic_alarm, null, Tok.ringGlow, 20.dp)
         Spacer(Modifier.width(Tok.sXs))
         Text(
-            if (count > 1) "$title 等 $count 個鬧鐘響鈴中" else "$title 響鈴中",
+            if (count > 1) L.t("$title 等 $count 個鬧鐘響鈴中", "$title and ${count - 1} more ringing") else L.t("$title 響鈴中", "$title ringing"),
             style = TypeTok.bodySm,
             color = Tok.ringInk,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
-                .clickable(role = Role.Button, onClickLabel = "開啟響鈴畫面") {
+                .clickable(role = Role.Button, onClickLabel = L.t("開啟響鈴畫面", "Open the ringing screen")) {
                     context.startActivity(Intent(context, AlarmActivity::class.java))
                 }
                 .padding(vertical = Tok.sXs),
         )
         Text(
-            "$snoozeMin 分後再響",
+            L.t("$snoozeMin 分後再響", "Snooze $snoozeMin min"),
             style = TypeTok.bodySm,
             color = Tok.ringInk,
             modifier = Modifier
@@ -252,7 +253,7 @@ private fun RingingBar(title: String, count: Int, snoozeMin: Int) {
                 .padding(horizontal = Tok.sXs, vertical = Tok.sXs),
         )
         Text(
-            "關閉",
+            L.t("關閉", "Dismiss"),
             style = TypeTok.bodySm,
             color = Tok.ringGlow,
             modifier = Modifier

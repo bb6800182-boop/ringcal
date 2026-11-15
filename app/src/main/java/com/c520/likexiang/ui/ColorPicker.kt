@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -56,44 +57,44 @@ data class Swatch(val name: String, val argb: Int?)
 
 /** 重點色的常用色：在預設的白底上不用調整（白字、當字用都有 4.5:1）。 */
 val ACCENT_SWATCHES = listOf(
-    Swatch("預設（紫）", null),
-    Swatch("藍", 0xFF1A5FB4.toInt()),
-    Swatch("青", 0xFF00707A.toInt()),
-    Swatch("綠", 0xFF137333.toInt()),
-    Swatch("橘", 0xFFB23F0C.toInt()),
-    Swatch("紅", 0xFFC5221F.toInt()),
-    Swatch("粉", 0xFFC2185B.toInt()),
-    Swatch("葡萄紫", 0xFF8E24AA.toInt()),
-    Swatch("石墨", 0xFF3C4043.toInt()),
+    Swatch(L.t("預設（紫）", "Default (purple)"), null),
+    Swatch(L.t("藍", "Blue"), 0xFF1A5FB4.toInt()),
+    Swatch(L.t("青", "Teal"), 0xFF00707A.toInt()),
+    Swatch(L.t("綠", "Green"), 0xFF137333.toInt()),
+    Swatch(L.t("橘", "Orange"), 0xFFB23F0C.toInt()),
+    Swatch(L.t("紅", "Red"), 0xFFC5221F.toInt()),
+    Swatch(L.t("粉", "Pink"), 0xFFC2185B.toInt()),
+    Swatch(L.t("葡萄紫", "Grape"), 0xFF8E24AA.toInt()),
+    Swatch(L.t("石墨", "Graphite"), 0xFF3C4043.toInt()),
 )
 
 /** 底色的常用色：淺色幾種、深色幾種。 */
 val CANVAS_SWATCHES = listOf(
-    Swatch("預設（白）", null),
-    Swatch("暖白", 0xFFFBF8F1.toInt()),
-    Swatch("淡灰", 0xFFF1F3F4.toInt()),
-    Swatch("淡藍", 0xFFEAF1FB.toInt()),
-    Swatch("淡綠", 0xFFEAF5EC.toInt()),
-    Swatch("淡粉", 0xFFFCEFF3.toInt()),
-    Swatch("深灰", 0xFF202124.toInt()),
-    Swatch("深藍", 0xFF0E1A2B.toInt()),
-    Swatch("黑", 0xFF000000.toInt()),
+    Swatch(L.t("預設（白）", "Default (white)"), null),
+    Swatch(L.t("暖白", "Warm white"), 0xFFFBF8F1.toInt()),
+    Swatch(L.t("淡灰", "Light gray"), 0xFFF1F3F4.toInt()),
+    Swatch(L.t("淡藍", "Light blue"), 0xFFEAF1FB.toInt()),
+    Swatch(L.t("淡綠", "Light green"), 0xFFEAF5EC.toInt()),
+    Swatch(L.t("淡粉", "Light pink"), 0xFFFCEFF3.toInt()),
+    Swatch(L.t("深灰", "Dark gray"), 0xFF202124.toInt()),
+    Swatch(L.t("深藍", "Dark blue"), 0xFF0E1A2B.toInt()),
+    Swatch(L.t("黑", "Black"), 0xFF000000.toInt()),
 )
 
 /** 日曆顏色的常用色：Google 月曆的 11 種行程顏色（名稱跟 Google 月曆 App 一樣）。 */
 val CALENDAR_SWATCHES = listOf(
-    Swatch("跟 Google 月曆一樣", null),
-    Swatch("番茄紅", 0xFFD50000.toInt()),
-    Swatch("紅鶴色", 0xFFE67C73.toInt()),
-    Swatch("橙橘色", 0xFFF4511E.toInt()),
-    Swatch("香蕉黃", 0xFFF6BF26.toInt()),
-    Swatch("鼠尾草綠", 0xFF33B679.toInt()),
-    Swatch("羅勒綠", 0xFF0B8043.toInt()),
-    Swatch("孔雀藍", 0xFF039BE5.toInt()),
-    Swatch("藍莓色", 0xFF3F51B5.toInt()),
-    Swatch("薰衣草色", 0xFF7986CB.toInt()),
-    Swatch("葡萄紫", 0xFF8E24AA.toInt()),
-    Swatch("石墨黑", 0xFF616161.toInt()),
+    Swatch(L.t("跟 Google 月曆一樣", "Same as Google Calendar"), null),
+    Swatch(L.t("番茄紅", "Tomato"), 0xFFD50000.toInt()),
+    Swatch(L.t("紅鶴色", "Flamingo"), 0xFFE67C73.toInt()),
+    Swatch(L.t("橙橘色", "Tangerine"), 0xFFF4511E.toInt()),
+    Swatch(L.t("香蕉黃", "Banana"), 0xFFF6BF26.toInt()),
+    Swatch(L.t("鼠尾草綠", "Sage"), 0xFF33B679.toInt()),
+    Swatch(L.t("羅勒綠", "Basil"), 0xFF0B8043.toInt()),
+    Swatch(L.t("孔雀藍", "Peacock"), 0xFF039BE5.toInt()),
+    Swatch(L.t("藍莓色", "Blueberry"), 0xFF3F51B5.toInt()),
+    Swatch(L.t("薰衣草色", "Lavender"), 0xFF7986CB.toInt()),
+    Swatch(L.t("葡萄紫", "Grape"), 0xFF8E24AA.toInt()),
+    Swatch(L.t("石墨黑", "Graphite"), 0xFF616161.toInt()),
 )
 
 /** 六位色碼（不含 #），例如 5645D4。 */
@@ -156,15 +157,15 @@ fun ColorPickerDialog(
                         SwatchButton(s.name, display(s.argb ?: defaultArgb), selected = choice == s.argb) { pick(s.argb) }
                     }
                 }
-                HsvSlider("色相", hue, 0f..360f, "${hue.roundToInt()} 度", Brush.horizontalGradient((0..6).map { Color.hsv(it * 60f, 1f, 1f) })) {
+                HsvSlider(L.t("色相", "Hue"), hue, 0f..360f, L.t("${hue.roundToInt()} 度", "${hue.roundToInt()}°"), Brush.horizontalGradient((0..6).map { Color.hsv(it * 60f, 1f, 1f) })) {
                     hue = it
                     slide()
                 }
-                HsvSlider("飽和度", sat, 0f..1f, "${(sat * 100).roundToInt()}%", Brush.horizontalGradient(listOf(Color.hsv(hue, 0f, bright), Color.hsv(hue, 1f, bright)))) {
+                HsvSlider(L.t("飽和度", "Saturation"), sat, 0f..1f, "${(sat * 100).roundToInt()}%", Brush.horizontalGradient(listOf(Color.hsv(hue, 0f, bright), Color.hsv(hue, 1f, bright)))) {
                     sat = it
                     slide()
                 }
-                HsvSlider("亮度", bright, 0f..1f, "${(bright * 100).roundToInt()}%", Brush.horizontalGradient(listOf(Color.Black, Color.hsv(hue, sat, 1f)))) {
+                HsvSlider(L.t("亮度", "Brightness"), bright, 0f..1f, "${(bright * 100).roundToInt()}%", Brush.horizontalGradient(listOf(Color.Black, Color.hsv(hue, sat, 1f)))) {
                     bright = it
                     slide()
                 }
@@ -176,12 +177,12 @@ fun ColorPickerDialog(
                         hex = v.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }.take(6)
                         if (hex.length == 6) pick(hex.toInt(16) or 0xFF000000.toInt())
                     },
-                    label = { Text("色碼", style = TypeTok.caption) },
+                    label = { Text(L.t("色碼", "Hex code"), style = TypeTok.caption) },
                     prefix = { Text("#", style = TypeTok.body, color = Tok.slate) },
                     singleLine = true,
                     isError = hexError,
                     supportingText = if (hexError) {
-                        { Text("色碼要 6 位（0–9、A–F），例如 1A73E8", style = TypeTok.caption, color = Tok.error) }
+                        { Text(L.t("色碼要 6 位（0–9、A–F），例如 1A73E8", "Use 6 hex digits (0–9, A–F), for example 1A73E8"), style = TypeTok.caption, color = Tok.error) }
                     } else {
                         null
                     },
@@ -196,8 +197,8 @@ fun ColorPickerDialog(
                 )
             }
         },
-        confirmButton = { TextButton(onClick = { onPick(choice) }) { DialogText("確定", primary = true) } },
-        dismissButton = { TextButton(onClick = onDismiss) { DialogText("取消", primary = false) } },
+        confirmButton = { TextButton(onClick = { onPick(choice) }) { DialogText(L.t("確定", "OK"), primary = true) } },
+        dismissButton = { TextButton(onClick = onDismiss) { DialogText(L.t("取消", "Cancel"), primary = false) } },
     )
 }
 
@@ -286,8 +287,8 @@ fun PalettePreview(p: Palette) {
         }
         Spacer(Modifier.width(Tok.sSm))
         Column(Modifier.weight(1f)) {
-            Text("今天的行程", style = TypeTok.body, color = p.ink)
-            Text("提前 10 分鐘響鈴", style = TypeTok.caption, color = p.slate)
+            Text(L.t("今天的行程", "Today's event"), style = TypeTok.body, color = p.ink)
+            Text(L.t("提前 10 分鐘響鈴", "Rings 10 minutes early"), style = TypeTok.caption, color = p.slate)
         }
         Spacer(Modifier.width(Tok.sXs))
         Box(
@@ -296,7 +297,7 @@ fun PalettePreview(p: Palette) {
                 .background(p.primary)
                 .padding(horizontal = Tok.sSm, vertical = Tok.sXxs),
         ) {
-            Text("儲存", style = TypeTok.bodySm, color = p.onPrimary)
+            Text(L.t("儲存", "Save"), style = TypeTok.bodySm, color = p.onPrimary)
         }
     }
 }

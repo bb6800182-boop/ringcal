@@ -15,8 +15,8 @@ android {
         // Android 13 起才有 USE_EXACT_ALARM 與通知權限，從 33 起跳可省掉舊版相容分支
         minSdk = 33
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.3.0"
+        versionCode = 12
+        versionName = "1.4.0"
     }
 
     // 簽章放在專案資料夾旁邊的 calendar-alarm-signing（不進版控；用 Dropbox 同步，每台電腦都用同一份）：
@@ -81,4 +81,10 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
 
     testImplementation(libs.junit)
+}
+
+// 單元測試固定用中文（台灣）跑：畫面文字跟著手機語言（L），測試預期的是中文；英文的測試自己切換語言
+tasks.withType<Test>().configureEach {
+    systemProperty("user.language", "zh")
+    systemProperty("user.country", "TW")
 }

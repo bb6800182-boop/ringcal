@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -124,10 +125,10 @@ fun MonthScreen(vm: MainViewModel, mode: HomeMode, onMenu: () -> Unit) {
 
 /** 檢視選單與左側選單共用的名稱：「3 天」「2 週」跟著設定的數字。 */
 fun HomeMode.label(s: Settings): String = when (this) {
-    HomeMode.AGENDA -> "行程"
-    HomeMode.MONTH -> "月"
-    HomeMode.DAYS -> "${s.customDays} 天"
-    HomeMode.WEEKS -> "${s.customWeeks} 週"
+    HomeMode.AGENDA -> L.t("行程", "Agenda")
+    HomeMode.MONTH -> L.t("月", "Month")
+    HomeMode.DAYS -> L.n(s.customDays, "天", "day")
+    HomeMode.WEEKS -> L.n(s.customWeeks, "週", "week")
 }
 
 /** 首頁共用的頂部列：左側選單、標題（農曆）、檢視切換、上下一頁、今天。 */
@@ -136,16 +137,16 @@ fun HomeTopBar(vm: MainViewModel, title: String, subtitle: String?, mode: HomeMo
     val settings by vm.settings.collectAsStateWithLifecycle()
     var viewMenu by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().heightIn(min = Tok.topBarH), verticalAlignment = Alignment.CenterVertically) {
-        IconBtn(R.drawable.ic_menu, "選單", onClick = onMenu)
+        IconBtn(R.drawable.ic_menu, L.t("選單", "Menu"), onClick = onMenu)
         TitleBlock(title, subtitle, Modifier.weight(1f))
-        IconBtn(R.drawable.ic_search, "搜尋行程", onClick = { vm.openSearch() })
+        IconBtn(R.drawable.ic_search, L.t("搜尋行程", "Search events"), onClick = { vm.openSearch() })
         Box {
             Row(
                 Modifier
                     .heightIn(min = 36.dp)
                     .clip(RoundedCornerShape(Tok.rMd))
                     .border(1.dp, Tok.hairlineStrong, RoundedCornerShape(Tok.rMd))
-                    .clickable(role = Role.Button, onClickLabel = "切換檢視") { viewMenu = true }
+                    .clickable(role = Role.Button, onClickLabel = L.t("切換檢視", "Switch view")) { viewMenu = true }
                     .padding(start = Tok.sSm, end = Tok.sXs, top = Tok.chipPadV, bottom = Tok.chipPadV),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -154,21 +155,21 @@ fun HomeTopBar(vm: MainViewModel, title: String, subtitle: String?, mode: HomeMo
             }
             DropdownMenu(expanded = viewMenu, onDismissRequest = { viewMenu = false }, containerColor = Tok.canvas) {
                 MenuItem(HomeMode.AGENDA.label(settings)) { viewMenu = false; vm.setHomeMode(HomeMode.AGENDA) }
-                MenuItem("日") { viewMenu = false; vm.openToday() }
+                MenuItem(L.t("日", "Day")) { viewMenu = false; vm.openToday() }
                 MenuItem(HomeMode.DAYS.label(settings)) { viewMenu = false; vm.setHomeMode(HomeMode.DAYS) }
                 MenuItem(HomeMode.MONTH.label(settings)) { viewMenu = false; vm.setHomeMode(HomeMode.MONTH) }
                 MenuItem(HomeMode.WEEKS.label(settings)) { viewMenu = false; vm.setHomeMode(HomeMode.WEEKS) }
             }
         }
         val unit = when (mode) {
-            HomeMode.MONTH -> "個月"
-            HomeMode.WEEKS -> "${settings.customWeeks} 週"
-            HomeMode.DAYS -> "${settings.customDays} 天"
+            HomeMode.MONTH -> L.t("個月", "month")
+            HomeMode.WEEKS -> L.n(settings.customWeeks, "週", "week")
+            HomeMode.DAYS -> L.n(settings.customDays, "天", "day")
             HomeMode.AGENDA -> null
         }
         if (unit != null) {
-            IconBtn(R.drawable.ic_chevron_left, if (mode == HomeMode.MONTH) "上個月" else "前 $unit", onClick = { vm.shift(-1) })
-            IconBtn(R.drawable.ic_chevron_right, if (mode == HomeMode.MONTH) "下個月" else "後 $unit", onClick = { vm.shift(1) })
+            IconBtn(R.drawable.ic_chevron_left, if (mode == HomeMode.MONTH) L.t("上個月", "Previous month") else L.t("前 $unit", "Previous $unit"), onClick = { vm.shift(-1) })
+            IconBtn(R.drawable.ic_chevron_right, if (mode == HomeMode.MONTH) L.t("下個月", "Next month") else L.t("後 $unit", "Next $unit"), onClick = { vm.shift(1) })
         } else {
             Spacer(Modifier.width(Tok.sXs))
         }
@@ -184,8 +185,9 @@ private fun MenuItem(text: String, onClick: () -> Unit) {
 
 @Composable
 fun WeekdayHeader(weekStart: DayOfWeek) {
-    val labels = listOf("一", "二", "三", "四", "五", "六", "日")
-    val ordered = if (weekStart == DayOfWeek.MONDAY) labels else listOf("日") + labels.dropLast(1)
+    // 2024-01-01 是週一：由日期格式產生「一…日」或 "M…S"，跟著語言
+    val labels = (0L..6L).map { Fmt.dowChar(java.time.LocalDate.of(2024, 1, 1).plusDays(it)) }
+    val ordered = if (weekStart == DayOfWeek.MONDAY) labels else listOf(labels.last()) + labels.dropLast(1)
     Row(Modifier.fillMaxWidth().heightIn(min = 22.dp).clearAndSetSemantics {}, verticalAlignment = Alignment.CenterVertically) {
         ordered.forEach { Text(it, style = TypeTok.caption, color = Tok.slate, textAlign = TextAlign.Center, modifier = Modifier.weight(1f)) }
     }
@@ -266,20 +268,20 @@ private fun WeekRow(
                 val events = perDay[i]
                 val label = buildString {
                     append(Fmt.dateWithDow(day))
-                    lunar[day]?.let { append("，農曆").append(it) }
+                    lunar[day]?.let { append(L.t("，農曆", ", lunar ")).append(it) }
                     if (events.isEmpty()) {
-                        append("，沒有行程")
+                        append(L.t("，沒有行程", ", no events"))
                     } else {
-                        append("，${events.size} 個行程：")
-                        append(events.take(5).joinToString("、") { if (isAlarm(it)) "${it.displayTitle}（鬧鐘）" else it.displayTitle })
-                        if (events.size > 5) append(" 等")
+                        append(L.t("，${events.size} 個行程：", ", ${events.size} events: "))
+                        append(events.take(5).joinToString(L.t("、", ", ")) { if (isAlarm(it)) L.t("${it.displayTitle}（鬧鐘）", "${it.displayTitle} (alarm)") else it.displayTitle })
+                        if (events.size > 5) append(L.t(" 等", " and more"))
                     }
                 }
                 Box(
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clickable(role = Role.Button, onClickLabel = "看當天行程") { onDayClick(day) }
+                        .clickable(role = Role.Button, onClickLabel = L.t("看當天行程", "View this day")) { onDayClick(day) }
                         .semantics { contentDescription = label },
                 )
             }
@@ -344,7 +346,7 @@ fun Fab(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .background(Tok.canvas)
                 .border(1.dp, Tok.hairlineStrong, CircleShape)
                 .clickable(role = Role.Button) { context.startActivity(VoiceActivity.intent(context)) }
-                .semantics { contentDescription = "用語音新增行程" },
+                .semantics { contentDescription = L.t("用語音新增行程", "Add event by voice") },
             contentAlignment = Alignment.Center,
         ) {
             AppIcon(R.drawable.ic_mic, null, Tok.primary, 24.dp)
@@ -355,7 +357,7 @@ fun Fab(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .clip(RoundedCornerShape(Tok.rXl))
                 .background(Tok.primary)
                 .clickable(role = Role.Button, onClick = onClick)
-                .semantics { contentDescription = "新增行程" }
+                .semantics { contentDescription = L.t("新增行程", "New event") }
                 .padding(Tok.sMd),
             contentAlignment = Alignment.Center,
         ) {

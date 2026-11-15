@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -107,17 +108,17 @@ private const val GOOGLE_ACCOUNT = "com.google"
 
 /** Google 帳號的行程顏色：名稱跟 Google 月曆 App 的繁中名稱一樣，順序也照它的選單。key 是 Colors 表的 key。 */
 private val GOOGLE_EVENT_COLORS = linkedMapOf(
-    "11" to "番茄紅",
-    "4" to "紅鶴色",
-    "6" to "橙橘色",
-    "5" to "香蕉黃",
-    "2" to "鼠尾草綠",
-    "10" to "羅勒綠",
-    "7" to "孔雀藍",
-    "9" to "藍莓色",
-    "1" to "薰衣草色",
-    "3" to "葡萄紫",
-    "8" to "石墨黑",
+    "11" to L.t("番茄紅", "Tomato"),
+    "4" to L.t("紅鶴色", "Flamingo"),
+    "6" to L.t("橙橘色", "Tangerine"),
+    "5" to L.t("香蕉黃", "Banana"),
+    "2" to L.t("鼠尾草綠", "Sage"),
+    "10" to L.t("羅勒綠", "Basil"),
+    "7" to L.t("孔雀藍", "Peacock"),
+    "9" to L.t("藍莓色", "Blueberry"),
+    "1" to L.t("薰衣草色", "Lavender"),
+    "3" to L.t("葡萄紫", "Grape"),
+    "8" to L.t("石墨黑", "Graphite"),
 )
 
 private fun orderedColors(colors: List<EventColor>, google: Boolean): List<EventColor> {
@@ -128,7 +129,7 @@ private fun orderedColors(colors: List<EventColor>, google: Boolean): List<Event
 }
 
 private fun colorName(c: EventColor, ordered: List<EventColor>, google: Boolean): String =
-    (if (google) GOOGLE_EVENT_COLORS[c.key] else null) ?: "顏色 ${ordered.indexOf(c) + 1}"
+    (if (google) GOOGLE_EVENT_COLORS[c.key] else null) ?: L.t("顏色 ${ordered.indexOf(c) + 1}", "Color ${ordered.indexOf(c) + 1}")
 
 @Composable
 fun EditScreen(vm: MainViewModel, eventId: Long?, presetStart: LocalDateTime?, prefill: Prefill? = null) {
@@ -146,8 +147,8 @@ fun EditScreen(vm: MainViewModel, eventId: Long?, presetStart: LocalDateTime?, p
     }
     if (eventId != null && bundle == null) {
         Column(Modifier.fillMaxSize().background(Tok.canvas)) {
-            TopBar("編輯行程", navIcon = R.drawable.ic_close, navDescription = "關閉", onNav = { vm.back() })
-            Text("找不到這筆行程，可能已在其他裝置刪除。", style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
+            TopBar(L.t("編輯行程", "Edit event"), navIcon = R.drawable.ic_close, navDescription = L.t("關閉", "Close"), onNav = { vm.back() })
+            Text(L.t("找不到這筆行程，可能已在其他裝置刪除。", "Event not found. It may have been deleted on another device."), style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
         }
         return
     }
@@ -306,11 +307,11 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
         val start = if (allDay) startDate.atStartOfDay() else LocalDateTime.of(startDate, startTime)
         val end = if (allDay) endDate.plusDays(1).atStartOfDay() else LocalDateTime.of(endDate, endTime)
         titleError = when {
-            t.isEmpty() -> "請輸入標題"
-            calendarId <= 0 -> "沒有可以寫入的日曆，請到設定確認已允許讀寫日曆"
+            t.isEmpty() -> L.t("請輸入標題", "Enter a title")
+            calendarId <= 0 -> L.t("沒有可以寫入的日曆，請到設定確認已允許讀寫日曆", "No writable calendar. Check calendar access in Settings")
             else -> null
         }
-        timeError = if (!end.isAfter(start)) "結束時間要晚於開始時間" else null
+        timeError = if (!end.isAfter(start)) L.t("結束時間要晚於開始時間", "End must be after start") else null
         if (titleError != null || timeError != null) return
         // 重複選項沒動、開始日也沒動，就原樣保留原本的規則字串（WKST 等細節不會被改掉）
         val rrule = when {
@@ -336,11 +337,11 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
 
     Column(Modifier.fillMaxSize().background(Tok.canvas).imePadding()) {
         TopBar(
-            title = if (bundle == null) "新增行程" else "編輯行程",
+            title = if (bundle == null) L.t("新增行程", "New event") else L.t("編輯行程", "Edit event"),
             navIcon = R.drawable.ic_close,
-            navDescription = "不儲存，關閉",
+            navDescription = L.t("不儲存，關閉", "Close without saving"),
             onNav = close,
-            actions = { PrimaryButton("儲存", onClick = { save() }, enabled = !saving, modifier = Modifier.padding(end = Tok.sSm)) },
+            actions = { PrimaryButton(L.t("儲存", "Save"), onClick = { save() }, enabled = !saving, modifier = Modifier.padding(end = Tok.sSm)) },
         )
         Column(
             Modifier
@@ -355,7 +356,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                     title = it.replace('\n', ' ').take(CalendarRepository.MAX_TITLE)
                     titleError = null
                 },
-                placeholder = "新增標題",
+                placeholder = L.t("新增標題", "Add title"),
                 textStyle = TypeTok.titleLg,
                 isError = titleError != null,
                 imeAction = ImeAction.Next,
@@ -370,17 +371,17 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .clickable(enabled = bundle == null, role = Role.Button, onClickLabel = "選擇日曆") { dialog = EditDialog.CALENDAR }
+                    .clickable(enabled = bundle == null, role = Role.Button, onClickLabel = L.t("選擇日曆", "Choose calendar")) { dialog = EditDialog.CALENDAR }
                     .padding(vertical = Tok.sXs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.width(ICON_COL)) { ColorDot(current?.color, 18.dp) }
                 Column(Modifier.weight(1f)) {
-                    Text(current?.displayName ?: "沒有可寫入的日曆", style = TypeTok.body, color = Tok.ink)
+                    Text(current?.displayName ?: L.t("沒有可寫入的日曆", "No writable calendar"), style = TypeTok.body, color = Tok.ink)
                     if (current != null && current.accountName != current.displayName) {
                         Text(current.accountName, style = TypeTok.caption, color = Tok.slate)
                     }
-                    if (bundle != null) Text("已建立的行程不能換日曆，要移動請到 Google 月曆", style = TypeTok.caption, color = Tok.slate)
+                    if (bundle != null) Text(L.t("已建立的行程不能換日曆，要移動請到 Google 月曆", "Existing events can't change calendar here. Move them in Google Calendar"), style = TypeTok.caption, color = Tok.slate)
                 }
                 if (bundle == null) AppIcon(R.drawable.ic_chevron_down, null, Tok.slate, 20.dp)
             }
@@ -388,7 +389,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
 
             FormRow(R.drawable.ic_clock, divider = false) {
                 SwitchRow(
-                    title = "全天",
+                    title = L.t("全天", "All day"),
                     checked = allDay,
                     enabled = !timeLocked,
                     onChange = {
@@ -399,17 +400,17 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                 )
             }
             FormRow(null, divider = false) {
-                ValueText(Fmt.dateWithDow(startDate), "開始日期", Modifier.weight(1f), enabled = !timeLocked) { picker = PickerTarget.START_DATE }
-                if (!allDay) ValueText(Fmt.time(LocalDateTime.of(startDate, startTime)), "開始時間", Modifier, enabled = !timeLocked) { picker = PickerTarget.START_TIME }
+                ValueText(Fmt.dateWithDow(startDate), L.t("開始日期", "Start date"), Modifier.weight(1f), enabled = !timeLocked) { picker = PickerTarget.START_DATE }
+                if (!allDay) ValueText(Fmt.time(LocalDateTime.of(startDate, startTime)), L.t("開始時間", "Start time"), Modifier, enabled = !timeLocked) { picker = PickerTarget.START_TIME }
             }
             FormRow(null, divider = false) {
-                ValueText(Fmt.dateWithDow(endDate), "結束日期", Modifier.weight(1f), enabled = !timeLocked) { picker = PickerTarget.END_DATE }
-                if (!allDay) ValueText(Fmt.time(LocalDateTime.of(endDate, endTime)), "結束時間", Modifier, enabled = !timeLocked) { picker = PickerTarget.END_TIME }
+                ValueText(Fmt.dateWithDow(endDate), L.t("結束日期", "End date"), Modifier.weight(1f), enabled = !timeLocked) { picker = PickerTarget.END_DATE }
+                if (!allDay) ValueText(Fmt.time(LocalDateTime.of(endDate, endTime)), L.t("結束時間", "End time"), Modifier, enabled = !timeLocked) { picker = PickerTarget.END_TIME }
             }
             timeError?.let { ErrorText(it) }
             if (timeLocked) {
                 Text(
-                    "重複行程的日期、時間與重複規則請到 Google 月曆修改；標題、地點、說明、顏色和鬧鐘可以在這裡改。",
+                    L.t("重複行程的日期、時間與重複規則請到 Google 月曆修改；標題、地點、說明、顏色和鬧鐘可以在這裡改。", "For repeating events, change the date, time and repeat rule in Google Calendar. Title, location, notes, color and alarm can be changed here."),
                     style = TypeTok.caption,
                     color = Tok.slate,
                     modifier = Modifier.padding(start = ICON_COL, bottom = Tok.sXs),
@@ -417,11 +418,11 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
             }
             FormRow(R.drawable.ic_repeat) {
                 val label = when {
-                    repeatLocked && !timeLocked -> "不重複（重複行程中單獨修改過的一次）"
-                    customRepeat -> "自訂重複規則"
+                    repeatLocked && !timeLocked -> L.t("不重複（重複行程中單獨修改過的一次）", "Doesn't repeat (an edited occurrence of a repeating event)")
+                    customRepeat -> L.t("自訂重複規則", "Custom repeat rule")
                     else -> repeat.label
                 }
-                ValueText(label, "重複", Modifier.weight(1f), enabled = !repeatLocked) { dialog = EditDialog.REPEAT }
+                ValueText(label, L.t("重複", "Repeat"), Modifier.weight(1f), enabled = !repeatLocked) { dialog = EditDialog.REPEAT }
             }
 
             // 地點：沒有連網，不能查地圖；輸入時列出以前行程用過的地點
@@ -430,7 +431,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                 PlainField(
                     value = location,
                     onValueChange = { location = it.replace('\n', ' ').take(CalendarRepository.MAX_LOCATION) },
-                    placeholder = "新增地點",
+                    placeholder = L.t("新增地點", "Add location"),
                     imeAction = ImeAction.Next,
                     modifier = Modifier.weight(1f).onFocusChanged { locationFocused = it.isFocused },
                 )
@@ -442,7 +443,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                             .fillMaxWidth()
                             .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(Tok.rSm))
-                            .clickable(role = Role.Button, onClickLabel = "填入這個地點") { location = s }
+                            .clickable(role = Role.Button, onClickLabel = L.t("填入這個地點", "Use this location")) { location = s }
                             .padding(start = ICON_COL),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -464,8 +465,8 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                     .padding(horizontal = Tok.cardPadH, vertical = Tok.sSm),
             ) {
                 SwitchRow(
-                    title = "鬧鐘提醒",
-                    subtitle = "響到你按掉為止",
+                    title = L.t("鬧鐘提醒", "Alarm"),
+                    subtitle = L.t("響到你按掉為止", "Rings until you dismiss it"),
                     checked = alarmOn,
                     titleStyle = TypeTok.titleMd,
                     onChange = { setAlarm(it) },
@@ -487,8 +488,8 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                         AppIcon(R.drawable.ic_info, null, Tok.slate, 15.dp, Modifier.padding(top = 2.dp))
                         Spacer(Modifier.width(Tok.sXs))
                         Text(
-                            (if (ringAt != null) "${Fmt.dateWithDow(ringAt.toLocalDate())} ${Fmt.time(ringAt)} 響鈴；" else "") +
-                                if (mode == SyncMode.TITLE) "Google 月曆的標題會加上 ⏰" else "⏰ 只記在這支手機，不會改到標題",
+                            (if (ringAt != null) L.t("${Fmt.dateWithDow(ringAt.toLocalDate())} ${Fmt.time(ringAt)} 響鈴；", "Rings ${Fmt.dateWithDow(ringAt.toLocalDate())} ${Fmt.time(ringAt)}. ") else "") +
+                                if (mode == SyncMode.TITLE) L.t("Google 月曆的標題會加上 ⏰", "⏰ is added to the title in Google Calendar") else L.t("⏰ 只記在這支手機，不會改到標題", "⏰ is kept on this phone only; the title is not changed"),
                             style = TypeTok.caption,
                             color = Tok.slate,
                         )
@@ -500,12 +501,12 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
             Row(Modifier.fillMaxWidth().padding(vertical = Tok.sXxs), verticalAlignment = Alignment.Top) {
                 Box(Modifier.width(ICON_COL).padding(top = Tok.sSm)) { AppIcon(R.drawable.ic_bell, null, Tok.slate, 20.dp) }
                 Column(Modifier.weight(1f)) {
-                    Text("一般通知", style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(top = Tok.sSm))
+                    Text(L.t("一般通知", "Notifications"), style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(top = Tok.sSm))
                     reminders.sorted().forEach { m ->
                         val label = Fmt.reminderLabel(m)
                         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(label, style = TypeTok.body, color = Tok.ink, modifier = Modifier.weight(1f))
-                            IconBtn(R.drawable.ic_close, "移除「$label」的通知", onClick = {
+                            IconBtn(R.drawable.ic_close, L.t("移除「$label」的通知", "Remove notification: $label"), onClick = {
                                 reminders = reminders - m
                                 remindersTouched = true
                             }, tint = Tok.slate)
@@ -513,7 +514,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                     }
                     if (reminders.size < MAX_REMINDERS) {
                         Text(
-                            "新增通知",
+                            L.t("新增通知", "Add notification"),
                             style = TypeTok.body,
                             color = Tok.primary,
                             modifier = Modifier
@@ -525,7 +526,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                         )
                     }
                     if (alarmOn && reminders.isEmpty()) {
-                        Text("開了鬧鐘，一般通知預設關閉；需要的話可以再加。", style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(bottom = Tok.sXs))
+                        Text(L.t("開了鬧鐘，一般通知預設關閉；需要的話可以再加。", "With the alarm on, regular notifications are off by default. Add one if you need it."), style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(bottom = Tok.sXs))
                     }
                 }
             }
@@ -540,15 +541,15 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = 52.dp)
-                        .clickable(role = Role.Button, onClickLabel = "選擇顏色") { dialog = EditDialog.COLOR },
+                        .clickable(role = Role.Button, onClickLabel = L.t("選擇顏色", "Choose color")) { dialog = EditDialog.COLOR },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.width(ICON_COL)) { ColorDot(selected?.color ?: current?.color, 18.dp) }
                     Text(
-                        selected?.let { colorName(it, ordered, google) } ?: "預設顏色",
+                        selected?.let { colorName(it, ordered, google) } ?: L.t("預設顏色", "Default color"),
                         style = TypeTok.body,
                         color = Tok.ink,
-                        modifier = Modifier.semantics { contentDescription = "顏色：${selected?.let { c -> colorName(c, ordered, google) } ?: "預設顏色"}" },
+                        modifier = Modifier.semantics { contentDescription = L.t("顏色：", "Color: ") + (selected?.let { c -> colorName(c, ordered, google) } ?: L.t("預設顏色", "Default color")) },
                     )
                 }
                 Divider()
@@ -560,7 +561,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                 PlainField(
                     value = description,
                     onValueChange = { description = it.take(CalendarRepository.MAX_DESCRIPTION) },
-                    placeholder = "新增說明",
+                    placeholder = L.t("新增說明", "Add notes"),
                     singleLine = false,
                     minLines = 2,
                     modifier = Modifier.weight(1f),
@@ -568,7 +569,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
             }
             Divider()
             if (timeLocked) {
-                Text("這是重複行程，修改會套用到整個系列；只改其中一次請到 Google 月曆。", style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(vertical = Tok.sSm))
+                Text(L.t("這是重複行程，修改會套用到整個系列；只改其中一次請到 Google 月曆。", "This is a repeating event; changes apply to the whole series. To change one occurrence, use Google Calendar."), style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(vertical = Tok.sSm))
             }
             Spacer(Modifier.size(Tok.sXxl))
         }
@@ -576,9 +577,9 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
 
     if (confirmDiscard) {
         ConfirmDialog(
-            title = "放棄這次的修改？",
-            text = "還沒儲存的內容會不見。",
-            confirmText = "放棄",
+            title = L.t("放棄這次的修改？", "Discard changes?"),
+            text = L.t("還沒儲存的內容會不見。", "Unsaved changes will be lost."),
+            confirmText = L.t("放棄", "Discard"),
             onConfirm = {
                 confirmDiscard = false
                 vm.back()
@@ -589,7 +590,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
 
     val dismiss = { dialog = null }
     when (dialog) {
-        EditDialog.CALENDAR -> ChoiceDialog("選擇日曆", dismiss) {
+        EditDialog.CALENDAR -> ChoiceDialog(L.t("選擇日曆", "Choose calendar"), dismiss) {
             writable.groupBy { it.accountName }.forEach { (account, list) ->
                 OptionGroupTitle(account)
                 list.forEach { c ->
@@ -603,7 +604,7 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                 }
             }
         }
-        EditDialog.REPEAT -> ChoiceDialog("重複", dismiss) {
+        EditDialog.REPEAT -> ChoiceDialog(L.t("重複", "Repeat"), dismiss) {
             Repeat.entries.forEach { r ->
                 OptionRow(r.label, selected = r == repeat, onClick = {
                     repeat = r
@@ -621,9 +622,9 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
             remindersTouched = true
             dialog = null
         }, onDismiss = dismiss)
-        EditDialog.COLOR -> ChoiceDialog("行程顏色", dismiss) {
+        EditDialog.COLOR -> ChoiceDialog(L.t("行程顏色", "Event color"), dismiss) {
             val ordered = orderedColors(colors.orEmpty(), google)
-            OptionRow("預設顏色", selected = colorKey == null, subtitle = "跟日曆一樣", leading = { ColorDot(current?.color, 18.dp) }, onClick = {
+            OptionRow(L.t("預設顏色", "Default color"), selected = colorKey == null, subtitle = L.t("跟日曆一樣", "Same as calendar"), leading = { ColorDot(current?.color, 18.dp) }, onClick = {
                 colorKey = null
                 dialog = null
             })
@@ -652,9 +653,9 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                             timeError = null
                         }
                         picker = null
-                    }) { DialogText("確定", primary = true) }
+                    }) { DialogText(L.t("確定", "OK"), primary = true) }
                 },
-                dismissButton = { TextButton(onClick = { picker = null }) { DialogText("取消", primary = false) } },
+                dismissButton = { TextButton(onClick = { picker = null }) { DialogText(L.t("取消", "Cancel"), primary = false) } },
             ) { DatePicker(state = state) }
         }
         PickerTarget.START_TIME, PickerTarget.END_TIME -> {
@@ -669,9 +670,9 @@ private fun EditForm(vm: MainViewModel, bundle: EventBundle?, presetStart: Local
                         if (target == PickerTarget.START_TIME) setStart(newTime = t) else endTime = t
                         timeError = null
                         picker = null
-                    }) { DialogText("確定", primary = true) }
+                    }) { DialogText(L.t("確定", "OK"), primary = true) }
                 },
-                dismissButton = { TextButton(onClick = { picker = null }) { DialogText("取消", primary = false) } },
+                dismissButton = { TextButton(onClick = { picker = null }) { DialogText(L.t("取消", "Cancel"), primary = false) } },
                 text = { TimePicker(state = state) },
             )
         }
@@ -714,7 +715,7 @@ private fun ValueText(text: String, label: String, modifier: Modifier, enabled: 
         modifier = modifier
             .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(Tok.rSm))
-            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "修改$label", onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = L.t("修改$label", "Change: $label"), onClick = onClick)
             .semantics { contentDescription = "$label $text" }
             .padding(vertical = Tok.sSm),
     )

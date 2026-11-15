@@ -1,5 +1,6 @@
 package com.c520.likexiang.alarm
 
+import com.c520.likexiang.L
 import android.app.KeyguardManager
 import android.content.Intent
 import android.os.Bundle
@@ -161,7 +162,7 @@ private fun RingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(Tok.sXl))
-            Text("鬧鐘提醒", style = TypeTok.caption, color = Tok.ringInkMuted, modifier = Modifier.semantics { heading() })
+            Text(L.t("鬧鐘提醒", "Alarm"), style = TypeTok.caption, color = Tok.ringInkMuted, modifier = Modifier.semantics { heading() })
             Text(Fmt.time(now), style = TypeTok.clock, color = Tok.ringInk)
             Text(Fmt.dateLong(LocalDate.now()), style = TypeTok.body, color = Tok.ringInkMuted)
             Spacer(Modifier.height(Tok.sLg))
@@ -187,8 +188,8 @@ private fun RingScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Tok.sXs)) {
                 Settings.SNOOZE_OPTIONS.forEachIndexed { i, m ->
                     RingButton(
-                        text = if (i == 0) "$m 分後再響" else "$m 分",
-                        description = "$m 分鐘後再提醒",
+                        text = if (i == 0) L.t("$m 分後再響", "Snooze $m min") else L.t("$m 分", "$m min"),
+                        description = L.t("$m 分鐘後再提醒", "Remind again in $m minutes"),
                         background = Tok.ringSurface,
                         content = Tok.ringInk,
                         style = TypeTok.bodySm,
@@ -198,17 +199,17 @@ private fun RingScreen(
                 }
             }
             Spacer(Modifier.height(Tok.sSm))
-            RingButton("關閉", "關閉鬧鐘", Tok.primary, Tok.onPrimary, TypeTok.titleMd, Tok.ringDismissH, Modifier.fillMaxWidth(), onDismiss)
+            RingButton(L.t("關閉", "Dismiss"), L.t("關閉鬧鐘", "Dismiss alarm"), Tok.primary, Tok.onPrimary, TypeTok.titleMd, Tok.ringDismissH, Modifier.fillMaxWidth(), onDismiss)
             if (single != null && !single.isTest) {
                 Text(
-                    "打開行程 ›",
+                    L.t("打開行程 ›", "Open event ›"),
                     style = TypeTok.bodySm,
                     color = Tok.ringInkMuted,
                     modifier = Modifier
                         .padding(top = Tok.sXs)
                         .heightIn(min = 44.dp)
                         .clip(RoundedCornerShape(Tok.rSm))
-                        .clickable(role = Role.Button, onClickLabel = "關閉鬧鐘並打開這個行程") { onOpen(single) }
+                        .clickable(role = Role.Button, onClickLabel = L.t("關閉鬧鐘並打開這個行程", "Dismiss the alarm and open this event")) { onOpen(single) }
                         .padding(horizontal = Tok.sSm, vertical = Tok.sSm),
                 )
             }
@@ -222,10 +223,10 @@ private fun startsIn(item: RingItem, now: Long): String? {
     if (item.allDay) return null
     val minutes = ((item.begin - now + MINUTE_MS - 1) / MINUTE_MS).toInt()
     return when {
-        minutes <= 0 -> "已經開始"
-        minutes < 60 -> "$minutes 分鐘後開始"
-        minutes % 60 == 0 -> "${minutes / 60} 小時後開始"
-        else -> "${minutes / 60} 小時 ${minutes % 60} 分後開始"
+        minutes <= 0 -> L.t("已經開始", "Already started")
+        minutes < 60 -> L.t("$minutes 分鐘後開始", "Starts in $minutes min")
+        minutes % 60 == 0 -> L.t("${minutes / 60} 小時後開始", "Starts in ${minutes / 60} hr")
+        else -> L.t("${minutes / 60} 小時 ${minutes % 60} 分後開始", "Starts in ${minutes / 60} hr ${minutes % 60} min")
     }
 }
 
@@ -251,12 +252,12 @@ private fun ItemCard(item: RingItem, now: Long, onOpen: (RingItem) -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(Tok.rLg))
             .background(Tok.ringSurface)
-            .then(if (item.isTest) Modifier else Modifier.clickable(role = Role.Button, onClickLabel = "關閉鬧鐘並打開這個行程") { onOpen(item) })
+            .then(if (item.isTest) Modifier else Modifier.clickable(role = Role.Button, onClickLabel = L.t("關閉鬧鐘並打開這個行程", "Dismiss the alarm and open this event")) { onOpen(item) })
             .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
     ) {
         Text(item.title, style = TypeTok.titleMd, color = Tok.ringInk, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(
-            listOfNotNull(Notifications.describe(item), startsIn(item, now)).joinToString("・"),
+            listOfNotNull(Notifications.describe(item), startsIn(item, now)).joinToString(L.t("・", " · ")),
             style = TypeTok.bodySm,
             color = Tok.ringInkMuted,
             maxLines = 2,

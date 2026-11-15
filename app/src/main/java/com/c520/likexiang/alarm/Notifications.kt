@@ -1,5 +1,6 @@
 package com.c520.likexiang.alarm
 
+import com.c520.likexiang.L
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -28,20 +29,20 @@ object Notifications {
     fun ensureChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         nm.createNotificationChannel(
-            NotificationChannel(CH_RING, "鬧鐘響鈴", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "行程鬧鐘響鈴時的全螢幕畫面。鈴聲由 App 播放，這個通知本身不出聲。"
+            NotificationChannel(CH_RING, L.t("鬧鐘響鈴", "Alarm ringing"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = L.t("行程鬧鐘響鈴時的全螢幕畫面。鈴聲由 App 播放，這個通知本身不出聲。", "Full-screen alarm for events. The app plays the sound; this notification itself is silent.")
                 setSound(null, null)
                 enableVibration(false)
             },
         )
         nm.createNotificationChannel(
-            NotificationChannel(CH_MISSED, "錯過的鬧鐘", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "鬧鐘響滿時間沒人理會、或無法顯示響鈴畫面時留下的提醒。"
+            NotificationChannel(CH_MISSED, L.t("錯過的鬧鐘", "Missed alarms"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = L.t("鬧鐘響滿時間沒人理會、或無法顯示響鈴畫面時留下的提醒。", "Reminders left when an alarm rang out unanswered or the ringing screen could not be shown.")
             },
         )
         nm.createNotificationChannel(
-            NotificationChannel(CH_VOICE, "語音新增", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "用語音建立行程後的確認，點了可以修改或刪除。"
+            NotificationChannel(CH_VOICE, L.t("語音新增", "Voice add"), NotificationManager.IMPORTANCE_LOW).apply {
+                description = L.t("用語音建立行程後的確認，點了可以修改或刪除。", "Confirmation after adding an event by voice. Tap to edit or delete it.")
             },
         )
     }
@@ -59,11 +60,11 @@ object Notifications {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val icon = Icon.createWithResource(context, R.drawable.ic_stat_alarm)
-        val title = if (items.size == 1) first.title else "${first.title} 等 ${items.size} 個行程"
+        val title = if (items.size == 1) first.title else L.t("${first.title} 等 ${items.size} 個行程", "${first.title} and ${items.size - 1} more")
         val publicVersion = Notification.Builder(context, CH_RING)
             .setSmallIcon(R.drawable.ic_stat_alarm)
-            .setContentTitle("行程鬧鐘")
-            .setContentText(if (first.allDay) "整天行程" else time(first.begin) + " 開始")
+            .setContentTitle(L.t("行程鬧鐘", "Event alarm"))
+            .setContentText(if (first.allDay) L.t("整天行程", "All-day event") else L.t(time(first.begin) + " 開始", "Starts " + time(first.begin)))
             .setCategory(Notification.CATEGORY_ALARM)
             .build()
         return Notification.Builder(context, CH_RING)
@@ -78,15 +79,15 @@ object Notifications {
             .setFullScreenIntent(fullScreen, true)
             .setContentIntent(fullScreen)
             .setDeleteIntent(RingService.actionIntent(context, RingService.ACTION_DISMISS, 0, REQ_SWIPED))
-            .addAction(Notification.Action.Builder(icon, "$snoozeMinutes 分後再響", RingService.actionIntent(context, RingService.ACTION_SNOOZE, snoozeMinutes, REQ_SNOOZE)).build())
-            .addAction(Notification.Action.Builder(icon, "關閉", RingService.actionIntent(context, RingService.ACTION_DISMISS, 0, REQ_DISMISS)).build())
+            .addAction(Notification.Action.Builder(icon, L.t("$snoozeMinutes 分後再響", "Snooze $snoozeMinutes min"), RingService.actionIntent(context, RingService.ACTION_SNOOZE, snoozeMinutes, REQ_SNOOZE)).build())
+            .addAction(Notification.Action.Builder(icon, L.t("關閉", "Dismiss"), RingService.actionIntent(context, RingService.ACTION_DISMISS, 0, REQ_DISMISS)).build())
             .build()
     }
 
-    fun missed(context: Context, items: List<RingItem>) = post(context, items, "錯過的鬧鐘：")
+    fun missed(context: Context, items: List<RingItem>) = post(context, items, L.t("錯過的鬧鐘：", "Missed alarm: "))
 
     /** 響鈴服務起不來時的退路：至少有一則會出聲的通知。 */
-    fun fallback(context: Context, items: List<RingItem>) = post(context, items, "鬧鐘：")
+    fun fallback(context: Context, items: List<RingItem>) = post(context, items, L.t("鬧鐘：", "Alarm: "))
 
     private fun post(context: Context, items: List<RingItem>, prefix: String) {
         if (!canNotify(context)) return
@@ -119,8 +120,8 @@ object Notifications {
             context.getSystemService(NotificationManager::class.java)?.areNotificationsEnabled() == true
 
     fun describe(item: RingItem): String {
-        val time = if (item.allDay) "整天" else time(item.begin) + " 開始"
-        return if (item.location.isBlank()) time else "$time・${item.location}"
+        val time = if (item.allDay) L.t("整天", "All day") else L.t(time(item.begin) + " 開始", "Starts " + time(item.begin))
+        return if (item.location.isBlank()) time else time + L.t("・", " · ") + item.location
     }
 
     private fun time(millis: Long): String = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(TIME)

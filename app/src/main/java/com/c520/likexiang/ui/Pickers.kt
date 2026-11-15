@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -110,7 +111,7 @@ fun ChoiceDialog(title: String, onDismiss: () -> Unit, content: @Composable Colu
         title = { Text(title, style = TypeTok.titleMd, color = Tok.ink) },
         text = { Column(Modifier.verticalScroll(rememberScrollState())) { content() } },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { DialogText("取消", primary = false) } },
+        dismissButton = { TextButton(onClick = onDismiss) { DialogText(L.t("取消", "Cancel"), primary = false) } },
     )
 }
 
@@ -128,10 +129,10 @@ fun ColorDot(argb: Int?, size: Dp = 16.dp) {
 
 /** 自訂時間的單位。 */
 enum class TimeUnitChoice(val label: String, val minutes: Int) {
-    MINUTE("分鐘", 1),
-    HOUR("小時", 60),
-    DAY("天", 24 * 60),
-    WEEK("週", 7 * 24 * 60),
+    MINUTE(L.t("分鐘", "minutes"), 1),
+    HOUR(L.t("小時", "hours"), 60),
+    DAY(L.t("天", "days"), 24 * 60),
+    WEEK(L.t("週", "weeks"), 7 * 24 * 60),
 }
 
 /** 輸入「幾分鐘／小時／天／週」，換算成分鐘；超過 [maxMinutes] 不給確定。 */
@@ -149,8 +150,8 @@ fun CustomDurationDialog(
     fun confirm() {
         val total = text.toLongOrNull()?.times(unit.minutes)
         error = when {
-            total == null -> "請輸入數字"
-            total > maxMinutes -> "最多 ${Fmt.duration(maxMinutes)}"
+            total == null -> L.t("請輸入數字", "Enter a number")
+            total > maxMinutes -> L.t("最多 ${Fmt.duration(maxMinutes)}", "At most ${Fmt.duration(maxMinutes)}")
             else -> null
         }
         if (error == null && total != null) onConfirm(total.toInt())
@@ -168,7 +169,7 @@ fun CustomDurationDialog(
                         text = v.filter { it.isDigit() }.take(5)
                         error = null
                     },
-                    label = { Text("數字", style = TypeTok.caption) },
+                    label = { Text(L.t("數字", "Number"), style = TypeTok.caption) },
                     singleLine = true,
                     isError = error != null,
                     textStyle = TypeTok.body.copy(color = Tok.ink),
@@ -189,8 +190,8 @@ fun CustomDurationDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = ::confirm) { DialogText("確定", primary = true) } },
-        dismissButton = { TextButton(onClick = onDismiss) { DialogText("取消", primary = false) } },
+        confirmButton = { TextButton(onClick = ::confirm) { DialogText(L.t("確定", "OK"), primary = true) } },
+        dismissButton = { TextButton(onClick = onDismiss) { DialogText(L.t("取消", "Cancel"), primary = false) } },
     )
 }
 
@@ -199,15 +200,15 @@ fun CustomDurationDialog(
 fun LeadTimeDialog(current: Int, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
     var custom by remember { mutableStateOf(false) }
     if (custom) {
-        CustomDurationDialog("自訂提前時間", listOf(TimeUnitChoice.MINUTE, TimeUnitChoice.HOUR), Settings.MAX_OFFSET_MIN, onPick, onDismiss)
+        CustomDurationDialog(L.t("自訂提前時間", "Custom lead time"), listOf(TimeUnitChoice.MINUTE, TimeUnitChoice.HOUR), Settings.MAX_OFFSET_MIN, onPick, onDismiss)
         return
     }
-    ChoiceDialog("鬧鐘提前多久", onDismiss) {
+    ChoiceDialog(L.t("鬧鐘提前多久", "Ring how early"), onDismiss) {
         // 自訂過的值也列出來並打勾
         (Settings.OFFSET_OPTIONS + current).distinct().sorted().forEach { m ->
             OptionRow(Fmt.leadLabel(m), selected = m == current, onClick = { onPick(m) })
         }
-        OptionRow("自訂…", selected = null, onClick = { custom = true }, emphasis = true)
+        OptionRow(L.t("自訂…", "Custom…"), selected = null, onClick = { custom = true }, emphasis = true)
     }
 }
 
@@ -216,14 +217,14 @@ fun LeadTimeDialog(current: Int, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
 fun ReminderDialog(existing: Set<Int>, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
     var custom by remember { mutableStateOf(false) }
     if (custom) {
-        CustomDurationDialog("自訂通知時間", TimeUnitChoice.entries, CalendarRepository.MAX_REMINDER_MIN, onPick, onDismiss)
+        CustomDurationDialog(L.t("自訂通知時間", "Custom notification time"), TimeUnitChoice.entries, CalendarRepository.MAX_REMINDER_MIN, onPick, onDismiss)
         return
     }
-    ChoiceDialog("新增通知", onDismiss) {
+    ChoiceDialog(L.t("新增通知", "Add notification"), onDismiss) {
         Settings.REMINDER_OPTIONS.filter { it !in existing }.forEach { m ->
             OptionRow(Fmt.reminderLabel(m), selected = null, onClick = { onPick(m) })
         }
-        OptionRow("自訂…", selected = null, onClick = { custom = true }, emphasis = true)
+        OptionRow(L.t("自訂…", "Custom…"), selected = null, onClick = { custom = true }, emphasis = true)
     }
 }
 
@@ -233,14 +234,14 @@ fun ReminderDialog(existing: Set<Int>, onPick: (Int) -> Unit, onDismiss: () -> U
  */
 @Composable
 fun LeadTimeRow(minutes: Int, active: Boolean, allDayAt: String?, onClick: () -> Unit) {
-    val text = allDayAt?.let { "整天行程在當天 $it 響（可在設定調整）" } ?: Fmt.leadLabel(minutes)
+    val text = allDayAt?.let { L.t("整天行程在當天 $it 響（可在設定調整）", "All-day events ring at $it that day (change in Settings)") } ?: Fmt.leadLabel(minutes)
     Row(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(Tok.rMd))
-            .clickable(enabled = allDayAt == null, role = Role.Button, onClickLabel = "選擇提前時間", onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = "鬧鐘時間：$text" }
+            .clickable(enabled = allDayAt == null, role = Role.Button, onClickLabel = L.t("選擇提前時間", "Choose lead time"), onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = L.t("鬧鐘時間：$text", "Alarm time: $text") }
             .padding(horizontal = Tok.sXxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {

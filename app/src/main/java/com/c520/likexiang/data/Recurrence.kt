@@ -1,5 +1,6 @@
 package com.c520.likexiang.data
 
+import com.c520.likexiang.L
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -23,7 +24,7 @@ object Rfc5545 {
 }
 
 enum class Repeat(val label: String) {
-    NONE("不重複"), DAILY("每天"), WEEKLY("每週"), MONTHLY("每月"), YEARLY("每年");
+    NONE(L.t("不重複", "Doesn't repeat")), DAILY(L.t("每天", "Every day")), WEEKLY(L.t("每週", "Every week")), MONTHLY(L.t("每月", "Every month")), YEARLY(L.t("每年", "Every year"));
 
     fun toRrule(start: LocalDate): String? = when (this) {
         NONE -> null

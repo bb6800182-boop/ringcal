@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import android.Manifest
 import android.app.AlarmManager
 import android.app.Application
@@ -269,7 +270,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         when (req) {
             is ExternalRequest.Insert -> {
                 _stack.value = listOf(Screen.Home, Screen.Edit(null, null, req.prefill))
-                if (req.prefill.droppedRepeat) showMessage("重複規則比較複雜，這裡沒有套用；存檔後可到 Google 月曆設定")
+                if (req.prefill.droppedRepeat) showMessage(L.t("重複規則比較複雜，這裡沒有套用；存檔後可到 Google 月曆設定", "The repeat rule is too complex to apply here. After saving, set it in Google Calendar"))
             }
             is ExternalRequest.ViewEvent -> _stack.value = listOf(Screen.Home, Screen.Detail(req.eventId, req.begin))
             is ExternalRequest.ViewDay -> openDay(req.date)
@@ -552,8 +553,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 ok to clearedReminders
             }
             when {
-                !result.first -> showMessage("改不了這筆行程的標題，請確認日曆權限")
-                result.second -> showMessage("已開鬧鐘，並關掉這筆行程的 Google 一般通知（可在編輯裡加回）")
+                !result.first -> showMessage(L.t("改不了這筆行程的標題，請確認日曆權限", "Can't change this event's title. Check calendar access"))
+                result.second -> showMessage(L.t("已開鬧鐘，並關掉這筆行程的 Google 一般通知（可在編輯裡加回）", "Alarm on. This event's Google notifications were turned off (add them back in Edit)"))
             }
             AlarmEngine.reschedule(ctx)
             reload()
@@ -632,10 +633,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val title = AlarmRules.titleToSave(req.draft.title, existing?.detail?.title, mode, req.alarmOn)
         val draft = req.draft.copy(title = title)
         val id = if (existing == null) {
-            repo.insertEvent(draft) ?: return SaveResult(false, "存檔失敗：請確認已允許讀寫日曆，且選的日曆可以寫入")
+            repo.insertEvent(draft) ?: return SaveResult(false, L.t("存檔失敗：請確認已允許讀寫日曆，且選的日曆可以寫入", "Save failed: check that calendar access is allowed and the calendar is writable"))
         } else {
-            val original = req.original ?: return SaveResult(false, "存檔失敗：請重新開啟這筆行程再試一次")
-            if (!repo.updateEvent(existing.detail.id, draft, original)) return SaveResult(false, "存檔失敗：這筆行程可能是唯讀的")
+            val original = req.original ?: return SaveResult(false, L.t("存檔失敗：請重新開啟這筆行程再試一次", "Save failed: open the event again and retry"))
+            if (!repo.updateEvent(existing.detail.id, draft, original)) return SaveResult(false, L.t("存檔失敗：這筆行程可能是唯讀的", "Save failed: this event may be read-only"))
             existing.detail.id
         }
         val originalId = existing?.detail?.originalId
@@ -645,14 +646,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             SyncMode.LOCAL -> store.setLocalFlag(id, req.alarmOn)
         }
         val reminders = req.reminders ?: return SaveResult(true)
-        return if (repo.replaceAlertReminders(id, reminders)) SaveResult(true) else SaveResult(true, "行程已儲存，但一般通知沒有改成功")
+        return if (repo.replaceAlertReminders(id, reminders)) SaveResult(true) else SaveResult(true, L.t("行程已儲存，但一般通知沒有改成功", "Event saved, but notifications could not be updated"))
     }
 
     fun delete(bundle: EventBundle, onDeleted: () -> Unit) {
         viewModelScope.launch {
             val ok = withContext(Dispatchers.IO) { repo.deleteEvent(bundle.detail.id) }
             if (!ok) {
-                showMessage("刪除失敗：這筆行程可能是唯讀的")
+                showMessage(L.t("刪除失敗：這筆行程可能是唯讀的", "Delete failed: this event may be read-only"))
                 return@launch
             }
             store.forgetEvent(bundle.detail.id)
@@ -690,7 +691,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun testAlarm() {
         AlarmScheduler.scheduleTest(ctx)
-        showMessage("10 秒後會響，可以先關螢幕試試看")
+        showMessage(L.t("10 秒後會響，可以先關螢幕試試看", "It will ring in 10 seconds. Try turning the screen off"))
     }
 
     fun onPermissionsChanged() {

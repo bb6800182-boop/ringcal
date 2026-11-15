@@ -1,4 +1,6 @@
-# 曆刻響
+# 曆刻響 RingCal
+
+[English](#english)
 
 取代手機上 Google 月曆的 Android 月曆 App。行程照樣存在你的 Google 月曆，電腦和手機兩邊同步；每筆行程可以單獨打開「鬧鐘提醒」，時間到會像鬧鐘一樣全螢幕響，直到你按掉為止。
 
@@ -30,6 +32,7 @@
 - **不會亂響**：響之前再確認行程還在、時間沒變、沒有拒絕或取消；開機、改時間或時區、App 更新、電腦上改了行程時自動重排。鬧鐘需要的權限沒開或鬧鐘音量是 0 時，首頁會提醒。
 - **接手「加到月曆」**：其他 App 的「加到月曆」、開啟行程或日期時可以選曆刻響，也能設成一律用它。
 - **設定與首次精靈**：引導開好權限，並附「10 秒後試響」。
+- **中文、英文**：跟著手機的語言；英文手機上畫面、日期、語音新增都是英文。
 
 ## 從原始碼編譯
 
@@ -72,3 +75,15 @@ keyPassword=…
 - 本專案以 [MIT 授權](LICENSE) 釋出。使用的開放原始碼元件（Android Jetpack、Kotlin 等，Apache 2.0；Protocol Buffers，BSD 3-Clause）的授權全文在 App 的「設定 › 關於 › 開放原始碼授權」。
 - Google、Google 日曆與 Android 是 Google LLC 的商標。本 App 是個人開發的獨立作品，與 Google 沒有關係，也沒有經過 Google 認可。
 - 設計系統見 [DESIGN.md](DESIGN.md)。
+
+## English
+
+**RingCal** is an Android calendar app to use instead of the Google Calendar app. Events stay in your Google Calendar; turn the alarm on for the ones that matter and they ring full screen, like an alarm clock, until you dismiss them.
+
+- Per-event alarms, ringing even when the phone is locked or silent; snooze, skip once, alarm list.
+- ⏰ in the event title syncs the alarm with Google Calendar on your computer.
+- Month, day, N-day and N-week views, search, home screen widgets, voice add, custom colors.
+- English and Traditional Chinese; the app follows your phone's language.
+- No network permission, no data collection. Free, MIT licensed. Android 13 or later.
+
+Download and setup guide: https://c520.pages.dev/ringcal/en/

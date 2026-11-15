@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -67,12 +68,12 @@ fun AgendaScreen(vm: MainViewModel, onMenu: () -> Unit) {
     }
     Box(Modifier.fillMaxSize().background(Tok.canvas)) {
         Column(Modifier.fillMaxSize()) {
-            HomeTopBar(vm, title = "行程", subtitle = d?.let { "${Fmt.dateShort(it.from)} 起" }, mode = HomeMode.AGENDA, onMenu = onMenu)
+            HomeTopBar(vm, title = L.t("行程", "Agenda"), subtitle = d?.let { L.t("${Fmt.dateShort(it.from)} 起", "From ${Fmt.dateShort(it.from)}") }, mode = HomeMode.AGENDA, onMenu = onMenu)
             Divider()
             LazyColumn(Modifier.fillMaxSize(), state = listState) {
                 item(key = "earlier") {
                     Text(
-                        "顯示更早的行程",
+                        L.t("顯示更早的行程", "Show earlier events"),
                         style = TypeTok.bodySm,
                         color = Tok.primary,
                         textAlign = TextAlign.Center,
@@ -93,9 +94,9 @@ fun AgendaScreen(vm: MainViewModel, onMenu: () -> Unit) {
                     Text(
                         when {
                             d == null -> ""
-                            d.canLoadMore -> "載入中…"
-                            groups.isEmpty() -> "${Fmt.dateShort(d.from)} 之後沒有行程"
-                            else -> "已顯示到 ${Fmt.dateShort(d.to.minusDays(1))}"
+                            d.canLoadMore -> L.t("載入中…", "Loading…")
+                            groups.isEmpty() -> L.t("${Fmt.dateShort(d.from)} 之後沒有行程", "No events after ${Fmt.dateShort(d.from)}")
+                            else -> L.t("已顯示到 ${Fmt.dateShort(d.to.minusDays(1))}", "Shown through ${Fmt.dateShort(d.to.minusDays(1))}")
                         },
                         style = TypeTok.caption,
                         color = Tok.slate,
@@ -113,7 +114,7 @@ fun AgendaScreen(vm: MainViewModel, onMenu: () -> Unit) {
 @Composable
 fun DateListHeader(date: LocalDate, today: LocalDate) {
     Text(
-        (if (date == today) "今天・" else "") + Fmt.dateWithDow(date),
+        (if (date == today) L.t("今天・", "Today · ") else "") + Fmt.dateWithDow(date),
         style = TypeTok.caption,
         color = if (date == today) Tok.primary else Tok.slate,
         modifier = Modifier
@@ -130,7 +131,7 @@ fun EventListRow(e: EventInstance, alarm: Boolean, zone: ZoneId, showLocation: B
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable(onClickLabel = "看行程內容", onClick = onClick)
+            .clickable(onClickLabel = L.t("看行程內容", "View event"), onClick = onClick)
             .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -147,6 +148,6 @@ fun EventListRow(e: EventInstance, alarm: Boolean, zone: ZoneId, showLocation: B
                 Text(e.location, style = TypeTok.caption, color = Tok.slate, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (alarm) AppIcon(R.drawable.ic_alarm, "有鬧鐘", Tok.ink, 18.dp)
+        if (alarm) AppIcon(R.drawable.ic_alarm, L.t("有鬧鐘", "Has alarm"), Tok.ink, 18.dp)
     }
 }

@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -76,8 +77,8 @@ fun DayScreen(vm: MainViewModel, date: LocalDate) {
                 navIcon = R.drawable.ic_back,
                 onNav = { vm.back() },
                 actions = {
-                    IconBtn(R.drawable.ic_chevron_left, "前一天", onClick = { go(date.minusDays(1)) })
-                    IconBtn(R.drawable.ic_chevron_right, "後一天", onClick = { go(date.plusDays(1)) })
+                    IconBtn(R.drawable.ic_chevron_left, L.t("前一天", "Previous day"), onClick = { go(date.minusDays(1)) })
+                    IconBtn(R.drawable.ic_chevron_right, L.t("後一天", "Next day"), onClick = { go(date.plusDays(1)) })
                     TodayButton(onClick = { go(LocalDate.now()) })
                     Spacer(Modifier.width(Tok.sXxs))
                 },
@@ -124,7 +125,7 @@ private fun WeekStrip(date: LocalDate, vm: MainViewModel, onPick: (LocalDate) ->
                     .clip(RoundedCornerShape(Tok.rMd))
                     .clickable(role = Role.Tab) { onPick(d) }
                     .semantics(mergeDescendants = true) {
-                        contentDescription = Fmt.dateWithDow(d) + if (d == today) "，今天" else ""
+                        contentDescription = Fmt.dateWithDow(d) + if (d == today) L.t("，今天", ", today") else ""
                         this.selected = selected
                     }
                     .padding(vertical = Tok.sXxs),
@@ -160,7 +161,7 @@ private fun AllDayRow(events: List<EventInstance>, isAlarm: (EventInstance) -> B
     val shown = if (expanded || events.size <= 3) events else events.take(2)
     Row(Modifier.fillMaxWidth().padding(vertical = Tok.sXxs), verticalAlignment = Alignment.Top) {
         Text(
-            "整天",
+            L.t("整天", "All day"),
             style = TypeTok.caption,
             color = Tok.slate,
             textAlign = TextAlign.End,
@@ -176,13 +177,13 @@ private fun AllDayRow(events: List<EventInstance>, isAlarm: (EventInstance) -> B
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = 34.dp)
-                        .clickable(role = Role.Button, onClickLabel = "看行程內容") { open(e) },
+                        .clickable(role = Role.Button, onClickLabel = L.t("看行程內容", "View event")) { open(e) },
                     style = TypeTok.body,
                 )
             }
             if (events.size > 3) {
                 Text(
-                    if (expanded) "收起" else "還有 ${events.size - shown.size} 個整天行程",
+                    if (expanded) L.t("收起", "Show less") else L.t("還有 ${events.size - shown.size} 個整天行程", "${events.size - shown.size} more all-day"),
                     style = TypeTok.caption,
                     color = Tok.primary,
                     modifier = Modifier

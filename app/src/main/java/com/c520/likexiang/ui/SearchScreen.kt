@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -81,20 +82,20 @@ fun SearchScreen(vm: MainViewModel) {
 
     Column(Modifier.fillMaxSize().background(Tok.canvas)) {
         Row(Modifier.fillMaxWidth().heightIn(min = Tok.topBarH), verticalAlignment = Alignment.CenterVertically) {
-            IconBtn(R.drawable.ic_back, "返回", onClick = { vm.back() })
+            IconBtn(R.drawable.ic_back, L.t("返回", "Back"), onClick = { vm.back() })
             PlainField(
                 value = text,
                 onValueChange = {
                     text = it
                     vm.search(it)
                 },
-                placeholder = "搜尋行程",
+                placeholder = L.t("搜尋行程", "Search events"),
                 modifier = Modifier.weight(1f).focusRequester(focus),
                 imeAction = ImeAction.Search,
                 onImeAction = { keyboard?.hide() },
             )
             if (text.isNotEmpty()) {
-                IconBtn(R.drawable.ic_close, "清除搜尋", onClick = {
+                IconBtn(R.drawable.ic_close, L.t("清除搜尋", "Clear search"), onClick = {
                     text = ""
                     vm.search("")
                     focus.requestFocus()
@@ -106,17 +107,17 @@ fun SearchScreen(vm: MainViewModel) {
         Divider()
         val q = SearchQuery.normalize(text)
         when {
-            q == null -> Hint("輸入關鍵字，找標題、地點或說明裡有這些字的行程（今天前後 ${SearchQuery.YEARS} 年）。")
-            state.error -> Hint("讀不到日曆，請確認已允許讀取日曆。")
-            groups.isEmpty() -> Hint(if (state.loading || state.query != q) "搜尋中…" else "今天前後 ${SearchQuery.YEARS} 年內，找不到「$q」。")
+            q == null -> Hint(L.t("輸入關鍵字，找標題、地點或說明裡有這些字的行程（今天前後 ${SearchQuery.YEARS} 年）。", "Type a keyword to find events by title, location or notes (within ${SearchQuery.YEARS} years of today)."))
+            state.error -> Hint(L.t("讀不到日曆，請確認已允許讀取日曆。", "Can't read calendars. Check that calendar access is allowed."))
+            groups.isEmpty() -> Hint(if (state.loading || state.query != q) L.t("搜尋中…", "Searching…") else L.t("今天前後 ${SearchQuery.YEARS} 年內，找不到「$q」。", "No results for \"$q\" within ${SearchQuery.YEARS} years of today."))
             else -> LazyColumn(Modifier.fillMaxSize(), state = listState) {
                 item(key = "count") {
                     val n = state.results.size
                     Text(
                         when {
-                            state.loading -> "搜尋中…"
-                            n >= SearchQuery.MAX_RESULTS -> "找到超過 $n 個行程，只列離今天最近的 $n 個"
-                            else -> "找到 $n 個行程（今天前後 ${SearchQuery.YEARS} 年）"
+                            state.loading -> L.t("搜尋中…", "Searching…")
+                            n >= SearchQuery.MAX_RESULTS -> L.t("找到超過 $n 個行程，只列離今天最近的 $n 個", "More than $n events found. Showing the $n closest to today")
+                            else -> L.t("找到 $n 個行程（今天前後 ${SearchQuery.YEARS} 年）", "$n events found (within ${SearchQuery.YEARS} years of today)")
                         },
                         style = TypeTok.caption,
                         color = Tok.slate,

@@ -1,5 +1,6 @@
 package com.c520.likexiang.alarm
 
+import com.c520.likexiang.L
 import android.content.Intent
 
 /** 正在響的一筆鬧鐘。用平行陣列放進 Intent，不需要 Parcelable 外掛。 */
@@ -24,7 +25,7 @@ data class RingItem(
 
         fun from(p: PlannedAlarm) = RingItem(p.key, p.eventId, p.title, p.begin, p.location, p.allDay)
 
-        fun test(now: Long) = RingItem("test", -1, "測試鬧鐘", now + 10 * 60_000L, "這是試響，按關閉就會停", false)
+        fun test(now: Long) = RingItem("test", -1, L.t("測試鬧鐘", "Test alarm"), now + 10 * 60_000L, L.t("這是試響，按關閉就會停", "This is a test. Tap Dismiss to stop"), false)
 
         fun write(intent: Intent, items: List<RingItem>): Intent {
             val list = items.take(MAX_ITEMS)

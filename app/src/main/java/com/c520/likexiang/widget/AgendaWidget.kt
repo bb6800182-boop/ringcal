@@ -1,5 +1,6 @@
 package com.c520.likexiang.widget
 
+import com.c520.likexiang.L
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,17 +80,17 @@ private fun AgendaContent(m: AgendaModel) {
     Column(GlanceModifier.fillMaxSize().background(Widgets.color(Tok.canvas)).cornerRadius(Tok.rXl).padding(horizontal = 8.dp, vertical = 4.dp)) {
         Row(GlanceModifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "行程",
+                L.t("行程", "Agenda"),
                 style = TextStyle(color = Widgets.color(Tok.ink), fontSize = 17.sp, fontWeight = FontWeight.Bold),
                 modifier = GlanceModifier.defaultWeight().padding(start = 4.dp).clickable(actionStartActivity(Widgets.openApp(context))),
                 maxLines = 1,
             )
-            WidgetIconButton(R.drawable.ic_mic, "用語音新增行程", actionStartActivity(Widgets.voice(context)))
-            WidgetIconButton(R.drawable.ic_plus, "新增行程", actionStartActivity(Widgets.newEvent(context)), primary = true)
+            WidgetIconButton(R.drawable.ic_mic, L.t("用語音新增行程", "Add event by voice"), actionStartActivity(Widgets.voice(context)))
+            WidgetIconButton(R.drawable.ic_plus, L.t("新增行程", "New event"), actionStartActivity(Widgets.newEvent(context)), primary = true)
         }
         when {
-            !m.ok -> Empty("請先開啟${context.getString(R.string.app_name)}，允許讀取日曆")
-            m.rows.isEmpty() -> Empty("未來 ${WidgetData.AGENDA_DAYS} 天沒有行程")
+            !m.ok -> Empty(L.t("請先開啟${context.getString(R.string.app_name)}，允許讀取日曆", "Open ${context.getString(R.string.app_name)} first and allow calendar access"))
+            m.rows.isEmpty() -> Empty(L.t("未來 ${WidgetData.AGENDA_DAYS} 天沒有行程", "No events in the next ${WidgetData.AGENDA_DAYS} days"))
             else -> LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) {
                 items(m.rows, itemId = { row -> rowId(row) }) { row ->
                     when (row) {
@@ -111,8 +112,8 @@ private fun rowId(row: AgendaRow): Long = when (row) {
 @Composable
 private fun DateHeader(row: AgendaRow.Header, m: AgendaModel) {
     val label = Fmt.dateWithDow(row.date) + when (row.date) {
-        m.today -> "・今天"
-        m.today.plusDays(1) -> "・明天"
+        m.today -> L.t("・今天", " · Today")
+        m.today.plusDays(1) -> L.t("・明天", " · Tomorrow")
         else -> ""
     }
     Text(
@@ -127,12 +128,12 @@ private fun DateHeader(row: AgendaRow.Header, m: AgendaModel) {
 private fun EventRow(row: AgendaRow.Event) {
     val context = LocalContext.current
     val inst = row.inst
-    val time = if (inst.allDay) "整天" else "${Fmt.time(inst.begin)}–${Fmt.time(inst.end)}"
-    val sub = if (inst.location.isNotBlank()) "$time・${inst.location}" else time
+    val time = if (inst.allDay) L.t("整天", "All day") else "${Fmt.time(inst.begin)}–${Fmt.time(inst.end)}"
+    val sub = if (inst.location.isNotBlank()) time + L.t("・", " · ") + inst.location else time
     Row(
         GlanceModifier.fillMaxWidth().padding(vertical = 2.dp)
             .clickable(actionStartActivity(Widgets.openEvent(context, inst.eventId, inst.begin)))
-            .semantics { contentDescription = "${inst.displayTitle}，$time" + if (row.alarm) "，有鬧鐘" else "" },
+            .semantics { contentDescription = L.t("${inst.displayTitle}，$time", "${inst.displayTitle}, $time") + if (row.alarm) L.t("，有鬧鐘", ", has alarm") else "" },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(GlanceModifier.width(4.dp).height(34.dp).cornerRadius(Tok.rXs).background(Widgets.color(Tok.eventColor(inst.color)))) {}

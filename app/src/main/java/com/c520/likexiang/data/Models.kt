@@ -1,5 +1,6 @@
 package com.c520.likexiang.data
 
+import com.c520.likexiang.L
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,7 +48,7 @@ data class EventInstance(
     val ownColor: Boolean = false,
 ) {
     val key: String get() = alarmKey(eventId, begin)
-    val displayTitle: String get() = AlarmMarker.strip(title).ifBlank { "（無標題）" }
+    val displayTitle: String get() = AlarmMarker.strip(title).ifBlank { L.t("（無標題）", "(No title)") }
 
     /** 全天行程在資料庫裡是 UTC 午夜，要用 UTC 換日期；一般行程用手機時區。 */
     fun startDate(zone: ZoneId): LocalDate =
@@ -137,7 +138,7 @@ data class Settings(
     val vibrate: Boolean = true,
     val ringtoneUri: String? = null,
     val weekStartsMonday: Boolean = true,
-    val showLunar: Boolean = true,
+    val showLunar: Boolean = L.zh, // 英文介面預設不顯示農曆
     val hiddenCalendarIds: Set<Long> = emptySet(),
     /** 新增行程的預設日曆；null 或已不能寫入時用帳號的主要日曆。 */
     val defaultCalendarId: Long? = null,

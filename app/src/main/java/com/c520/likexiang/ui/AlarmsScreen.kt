@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -36,10 +37,10 @@ fun AlarmsScreen(vm: MainViewModel) {
     LaunchedEffect(alarmState) { vm.loadUpcoming() }
     val zone = ZoneId.systemDefault()
     Column(Modifier.fillMaxSize().background(Tok.canvas)) {
-        TopBar("鬧鐘清單", subtitle = "未來 7 天", navIcon = R.drawable.ic_back, onNav = { vm.back() })
+        TopBar(L.t("鬧鐘清單", "Alarms"), subtitle = L.t("未來 7 天", "Next 7 days"), navIcon = R.drawable.ic_back, onNav = { vm.back() })
         Divider()
         if (list.isEmpty()) {
-            Text("未來 7 天沒有鬧鐘。新增行程時打開「鬧鐘提醒」就會出現在這裡。", style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
+            Text(L.t("未來 7 天沒有鬧鐘。新增行程時打開「鬧鐘提醒」就會出現在這裡。", "No alarms in the next 7 days. Turn on \"Alarm\" when adding an event and it appears here."), style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
         }
         LazyColumn(Modifier.fillMaxSize()) {
             items(list, key = { it.key + if (it.snoozed) "#s" else "" }) { a ->
@@ -47,7 +48,7 @@ fun AlarmsScreen(vm: MainViewModel) {
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable(onClickLabel = "看行程內容") { vm.navigate(Screen.Detail(a.eventId, a.begin)) }
+                        .clickable(onClickLabel = L.t("看行程內容", "View event")) { vm.navigate(Screen.Detail(a.eventId, a.begin)) }
                         .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -67,17 +68,17 @@ fun AlarmsScreen(vm: MainViewModel) {
                         )
                         Text(
                             when {
-                                a.skipped -> "這次略過"
-                                a.snoozed -> "稍後再響"
-                                a.allDay -> "整天行程"
-                                else -> "${Fmt.time(a.begin)} 開始"
+                                a.skipped -> L.t("這次略過", "Skipped")
+                                a.snoozed -> L.t("稍後再響", "Snoozed")
+                                a.allDay -> L.t("整天行程", "All-day event")
+                                else -> L.t("${Fmt.time(a.begin)} 開始", "Starts ${Fmt.time(a.begin)}")
                             },
                             style = TypeTok.caption,
                             color = Tok.slate,
                         )
                     }
                     if (!a.snoozed) {
-                        OutlineButton(if (a.skipped) "恢復" else "略過這次", onClick = { vm.setSkip(a.key, !a.skipped) })
+                        OutlineButton(if (a.skipped) L.t("恢復", "Restore") else L.t("略過這次", "Skip"), onClick = { vm.setSkip(a.key, !a.skipped) })
                     }
                 }
                 Divider()

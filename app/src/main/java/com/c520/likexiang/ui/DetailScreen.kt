@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import android.content.ActivityNotFoundException
 import android.content.ContentUris
 import android.content.Context
@@ -67,17 +68,17 @@ fun DetailScreen(vm: MainViewModel, eventId: Long, begin: Long) {
     val b = bundle
     Column(Modifier.fillMaxSize().background(Tok.canvas)) {
         TopBar(
-            title = "行程內容",
+            title = L.t("行程內容", "Event"),
             navIcon = R.drawable.ic_back,
             onNav = { vm.back() },
             actions = {
                 // 受邀、主辦人沒開放修改的行程不給編輯；只有主辦人能刪（受邀的交給 Google 月曆回覆或移除）
-                if (b != null && b.detail.canEditTitle) IconBtn(R.drawable.ic_edit, "編輯", onClick = { vm.navigate(Screen.Edit(b.detail.id, null)) })
-                if (b != null && b.detail.canDelete) IconBtn(R.drawable.ic_trash, "刪除", onClick = { confirmDelete = true })
+                if (b != null && b.detail.canEditTitle) IconBtn(R.drawable.ic_edit, L.t("編輯", "Edit"), onClick = { vm.navigate(Screen.Edit(b.detail.id, null)) })
+                if (b != null && b.detail.canDelete) IconBtn(R.drawable.ic_trash, L.t("刪除", "Delete"), onClick = { confirmDelete = true })
             },
         )
         if (b == null) {
-            if (loaded) Text("找不到這筆行程，可能已在其他裝置刪除。", style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
+            if (loaded) Text(L.t("找不到這筆行程，可能已在其他裝置刪除。", "Event not found. It may have been deleted on another device."), style = TypeTok.body, color = Tok.slate, modifier = Modifier.padding(Tok.sXl))
             return@Column
         }
         val d = b.detail
@@ -94,13 +95,13 @@ fun DetailScreen(vm: MainViewModel, eventId: Long, begin: Long) {
                 Text(d.calendarName, style = TypeTok.caption, color = Tok.slate)
             }
             Spacer(Modifier.height(Tok.sXs))
-            Text(AlarmMarker.strip(d.title).ifBlank { "（無標題）" }, style = TypeTok.titleLg, color = Tok.ink)
+            Text(AlarmMarker.strip(d.title).ifBlank { L.t("（無標題）", "(No title)") }, style = TypeTok.titleLg, color = Tok.ink)
             Spacer(Modifier.height(Tok.sXs))
             InfoRow(R.drawable.ic_clock, Fmt.range(b.instanceBegin, instanceEnd, d.allDay))
-            if (d.recurring) InfoRow(R.drawable.ic_repeat, "重複行程（修改會套用到整個系列）")
+            if (d.recurring) InfoRow(R.drawable.ic_repeat, L.t("重複行程（修改會套用到整個系列）", "Repeating event (changes apply to the whole series)"))
             if (d.location.isNotBlank()) {
-                InfoRow(R.drawable.ic_pin, d.location, actionLabel = "在地圖上開啟") {
-                    if (!openMap(context, d.location)) vm.showMessage("找不到可以開啟地圖的 App")
+                InfoRow(R.drawable.ic_pin, d.location, actionLabel = L.t("在地圖上開啟", "Open in maps")) {
+                    if (!openMap(context, d.location)) vm.showMessage(L.t("找不到可以開啟地圖的 App", "No maps app found"))
                 }
             }
             if (b.attendees.isNotEmpty()) AttendeeList(b.attendees, d.ownerAccount)
@@ -119,13 +120,13 @@ fun DetailScreen(vm: MainViewModel, eventId: Long, begin: Long) {
 
             InfoRow(
                 R.drawable.ic_bell,
-                if (b.reminders.isEmpty()) "沒有一般通知" else "一般通知：" + b.reminders.joinToString("、") { Fmt.reminderLabel(it) },
+                if (b.reminders.isEmpty()) L.t("沒有一般通知", "No notifications") else L.t("一般通知：", "Notifications: ") + b.reminders.joinToString(L.t("、", ", ")) { Fmt.reminderLabel(it) },
             )
 
             if (isGoogleCalendarInstalled(context)) {
                 Spacer(Modifier.height(Tok.sMd))
-                OutlineButton("在 Google 月曆開啟", onClick = {
-                    if (!openInGoogleCalendar(context, d.id, b.instanceBegin, instanceEnd)) vm.showMessage("開不了 Google 月曆")
+                OutlineButton(L.t("在 Google 月曆開啟", "Open in Google Calendar"), onClick = {
+                    if (!openInGoogleCalendar(context, d.id, b.instanceBegin, instanceEnd)) vm.showMessage(L.t("開不了 Google 月曆", "Can't open Google Calendar"))
                 })
             }
             Spacer(Modifier.height(Tok.sXxl))
@@ -133,13 +134,13 @@ fun DetailScreen(vm: MainViewModel, eventId: Long, begin: Long) {
     }
     if (confirmDelete && b != null) {
         ConfirmDialog(
-            title = "刪除這筆行程？",
+            title = L.t("刪除這筆行程？", "Delete this event?"),
             text = when {
-                b.detail.recurring -> "這是重複行程，會刪掉整個系列。只想刪這一次，請按下方的「在 Google 月曆開啟」。"
-                b.hasOtherAttendees -> "這筆行程有其他與會者，刪除後 Google 月曆會通知他們行程取消。"
-                else -> "刪除後電腦上的 Google 月曆也會一起刪除。"
+                b.detail.recurring -> L.t("這是重複行程，會刪掉整個系列。只想刪這一次，請按下方的「在 Google 月曆開啟」。", "This is a repeating event; the whole series will be deleted. To delete only this one, tap \"Open in Google Calendar\" below.")
+                b.hasOtherAttendees -> L.t("這筆行程有其他與會者，刪除後 Google 月曆會通知他們行程取消。", "This event has other guests. Google Calendar will tell them it is cancelled.")
+                else -> L.t("刪除後電腦上的 Google 月曆也會一起刪除。", "It will also be deleted from Google Calendar on your computer.")
             },
-            confirmText = "刪除",
+            confirmText = L.t("刪除", "Delete"),
             onConfirm = {
                 confirmDelete = false
                 vm.delete(b) { vm.back() }
@@ -173,18 +174,18 @@ private fun AttendeeList(list: List<Attendee>, ownerAccount: String?) {
         AppIcon(R.drawable.ic_calendar, null, Tok.slate, 20.dp)
         Spacer(Modifier.width(Tok.sSm))
         Column(Modifier.weight(1f)) {
-            Text("${list.size} 位與會者", style = TypeTok.body, color = Tok.ink)
+            Text(L.t("${list.size} 位與會者", if (list.size == 1) "1 guest" else "${list.size} guests"), style = TypeTok.body, color = Tok.ink)
             list.forEach { a ->
                 val me = a.email.isNotBlank() && a.email.equals(ownerAccount, ignoreCase = true)
-                val name = a.name.ifBlank { a.email }.ifBlank { "（未命名）" } + if (me) "（你）" else ""
+                val name = a.name.ifBlank { a.email }.ifBlank { L.t("（未命名）", "(No name)") } + if (me) L.t("（你）", " (you)") else ""
                 val status = when (a.status) {
-                    Attendees.ATTENDEE_STATUS_ACCEPTED -> "已接受"
-                    Attendees.ATTENDEE_STATUS_DECLINED -> "已拒絕"
-                    Attendees.ATTENDEE_STATUS_TENTATIVE -> "未定"
-                    Attendees.ATTENDEE_STATUS_INVITED -> "未回覆"
+                    Attendees.ATTENDEE_STATUS_ACCEPTED -> L.t("已接受", "Accepted")
+                    Attendees.ATTENDEE_STATUS_DECLINED -> L.t("已拒絕", "Declined")
+                    Attendees.ATTENDEE_STATUS_TENTATIVE -> L.t("未定", "Maybe")
+                    Attendees.ATTENDEE_STATUS_INVITED -> L.t("未回覆", "No reply")
                     else -> ""
                 }
-                Text(if (status.isEmpty()) name else "$name・$status", style = TypeTok.bodySm, color = Tok.slate)
+                Text(if (status.isEmpty()) name else name + L.t("・", " · ") + status, style = TypeTok.bodySm, color = Tok.slate)
             }
         }
     }
@@ -209,8 +210,8 @@ private fun AlarmCard(
             .padding(horizontal = Tok.cardPadH, vertical = Tok.sSm),
     ) {
         SwitchRow(
-            title = "鬧鐘提醒",
-            subtitle = "響到你按掉為止",
+            title = L.t("鬧鐘提醒", "Alarm"),
+            subtitle = L.t("響到你按掉為止", "Rings until you dismiss it"),
             checked = bundle.alarmOn,
             onChange = onToggle,
             titleStyle = TypeTok.titleMd,
@@ -236,16 +237,16 @@ private fun AlarmCard(
                     onOffset(m)
                 }, onDismiss = { leadDialog = false })
             }
-            SwitchRow(title = "略過這一次", checked = bundle.skipped, onChange = onSkip, modifier = Modifier.padding(top = Tok.sXs))
+            SwitchRow(title = L.t("略過這一次", "Skip this time"), checked = bundle.skipped, onChange = onSkip, modifier = Modifier.padding(top = Tok.sXs))
         }
         Row(Modifier.padding(top = Tok.sXs), verticalAlignment = Alignment.Top) {
             AppIcon(R.drawable.ic_info, null, Tok.slate, 15.dp, Modifier.padding(top = 2.dp))
             Spacer(Modifier.width(Tok.sXs))
             Text(
                 when (bundle.syncMode) {
-                    SyncMode.TITLE -> "鬧鐘會同步到 Google 月曆：標題前面加上 ⏰，電腦上也看得到。"
-                    SyncMode.LOCAL -> if (bundle.hasOtherAttendees) "這個行程有其他與會者，⏰ 只記在這支手機，不會改到大家看到的標題。"
-                    else "這個行程不能修改標題，⏰ 只記在這支手機。"
+                    SyncMode.TITLE -> L.t("鬧鐘會同步到 Google 月曆：標題前面加上 ⏰，電腦上也看得到。", "The alarm syncs to Google Calendar: ⏰ is added before the title, so you see it on a computer too.")
+                    SyncMode.LOCAL -> if (bundle.hasOtherAttendees) L.t("這個行程有其他與會者，⏰ 只記在這支手機，不會改到大家看到的標題。", "This event has other guests, so ⏰ is kept on this phone only and the shared title is not changed.")
+                    else L.t("這個行程不能修改標題，⏰ 只記在這支手機。", "This event's title can't be changed, so ⏰ is kept on this phone only.")
                 },
                 style = TypeTok.caption,
                 color = Tok.slate,

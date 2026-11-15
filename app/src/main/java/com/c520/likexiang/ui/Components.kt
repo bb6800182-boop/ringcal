@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -82,7 +83,7 @@ fun TopBar(
     title: String,
     subtitle: String? = null,
     @DrawableRes navIcon: Int? = null,
-    navDescription: String = "返回",
+    navDescription: String = L.t("返回", "Back"),
     onNav: () -> Unit = {},
     actions: @Composable () -> Unit = {},
 ) {
@@ -160,7 +161,7 @@ fun TodayButton(onClick: () -> Unit) {
             .size(48.dp)
             .clip(CircleShape)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = "回到今天" },
+            .semantics { contentDescription = L.t("回到今天", "Go to today") },
         contentAlignment = Alignment.Center,
     ) {
         AppIcon(R.drawable.ic_calendar, null, Tok.ink, 24.dp)
@@ -283,7 +284,7 @@ fun EventChip(title: String, argb: Int, alarm: Boolean, modifier: Modifier = Mod
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (alarm) {
-            AppIcon(R.drawable.ic_alarm, "有鬧鐘", fg, 10.dp)
+            AppIcon(R.drawable.ic_alarm, L.t("有鬧鐘", "Has alarm"), fg, 10.dp)
             Spacer(Modifier.width(2.dp))
         }
         Text(title, style = style, color = fg, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
@@ -299,7 +300,7 @@ fun CalendarToggles(
     onToggle: (CalendarInfo, Boolean) -> Unit,
 ) {
     if (calendars.isEmpty()) {
-        Text("還沒有讀到日曆，請先允許讀取日曆。", style = TypeTok.caption, color = Tok.slate)
+        Text(L.t("還沒有讀到日曆，請先允許讀取日曆。", "No calendars yet. Please allow calendar access first."), style = TypeTok.caption, color = Tok.slate)
         return
     }
     calendars.groupBy { it.accountName }.forEach { (account, list) ->
@@ -322,7 +323,7 @@ fun CalendarToggles(
                 Box(Modifier.size(10.dp).clip(CircleShape).background(Tok.eventColor(c.color)))
                 Spacer(Modifier.width(Tok.sXs))
                 Text(c.displayName, style = TypeTok.body, color = Tok.ink, modifier = Modifier.weight(1f))
-                if (onColor != null) IconBtn(R.drawable.ic_palette, "換「${c.displayName}」的顏色", onClick = { onColor(c) }, tint = Tok.slate)
+                if (onColor != null) IconBtn(R.drawable.ic_palette, L.t("換「${c.displayName}」的顏色", "Change color of ${c.displayName}"), onClick = { onColor(c) }, tint = Tok.slate)
             }
         }
     }
@@ -361,7 +362,7 @@ fun MessageBar(message: String?, onDismiss: () -> Unit, modifier: Modifier = Mod
             .fillMaxWidth()
             .clip(RoundedCornerShape(Tok.rLg))
             .background(Tok.ink)
-            .clickable(onClickLabel = "關閉提示", onClick = onDismiss)
+            .clickable(onClickLabel = L.t("關閉提示", "Dismiss message"), onClick = onDismiss)
             .semantics { liveRegion = LiveRegionMode.Polite }
             .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
     ) {
@@ -378,7 +379,7 @@ fun ConfirmDialog(title: String, text: String, confirmText: String, onConfirm: (
         title = { Text(title, style = TypeTok.titleMd, color = Tok.ink) },
         text = { Text(text, style = TypeTok.body, color = Tok.charcoal) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirmText, style = TypeTok.body, color = Tok.primary) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", style = TypeTok.body, color = Tok.slate) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(L.t("取消", "Cancel"), style = TypeTok.body, color = Tok.slate) } },
     )
 }
 

@@ -1,5 +1,6 @@
 package com.c520.likexiang.widget
 
+import com.c520.likexiang.L
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
@@ -214,7 +215,7 @@ private fun MonthContent(m: MonthModel) {
     ) {
         Header(m)
         if (!m.ok) {
-            Message("請先開啟${LocalContext.current.getString(R.string.app_name)}，允許讀取日曆")
+            Message(L.t("請先開啟${LocalContext.current.getString(R.string.app_name)}，允許讀取日曆", "Open ${LocalContext.current.getString(R.string.app_name)} first and allow calendar access"))
             return@Column
         }
         val cols = m.weeks.first().size
@@ -252,23 +253,23 @@ private fun Header(m: MonthModel) {
         if (m.offset != 0) {
             // App 頂部的「今天」（button-outline）；小工具畫不了外框，改用 surface 底色
             Text(
-                "今天",
+                L.t("今天", "Today"),
                 style = TextStyle(color = Widgets.color(Tok.ink), fontSize = 13.sp, fontWeight = FontWeight.Medium),
                 modifier = GlanceModifier.padding(horizontal = Tok.sSm, vertical = 6.dp).cornerRadius(Tok.rMd)
                     .background(Widgets.color(Tok.surface)).clickable(shiftMonth(0))
-                    .semantics { contentDescription = "回到今天" },
+                    .semantics { contentDescription = L.t("回到今天", "Go to today") },
                 maxLines = 1,
             )
         }
         val unit = when (m.range) {
             WidgetRange.MONTH -> null
-            WidgetRange.WEEKS -> "${m.weeks.size} 週"
-            WidgetRange.DAYS -> "${m.weeks.first().size} 天"
+            WidgetRange.WEEKS -> L.n(m.weeks.size, "週", "week")
+            WidgetRange.DAYS -> L.n(m.weeks.first().size, "天", "day")
         }
-        WidgetIconButton(R.drawable.ic_chevron_left, unit?.let { "前 $it" } ?: "上個月", shiftMonth(-1))
-        WidgetIconButton(R.drawable.ic_chevron_right, unit?.let { "後 $it" } ?: "下個月", shiftMonth(1))
-        WidgetIconButton(R.drawable.ic_mic, "用語音新增行程", actionStartActivity(Widgets.voice(context)))
-        WidgetIconButton(R.drawable.ic_plus, "新增行程", actionStartActivity(Widgets.newEvent(context)), primary = true)
+        WidgetIconButton(R.drawable.ic_chevron_left, unit?.let { L.t("前 $it", "Previous $it") } ?: L.t("上個月", "Previous month"), shiftMonth(-1))
+        WidgetIconButton(R.drawable.ic_chevron_right, unit?.let { L.t("後 $it", "Next $it") } ?: L.t("下個月", "Next month"), shiftMonth(1))
+        WidgetIconButton(R.drawable.ic_mic, L.t("用語音新增行程", "Add event by voice"), actionStartActivity(Widgets.voice(context)))
+        WidgetIconButton(R.drawable.ic_plus, L.t("新增行程", "New event"), actionStartActivity(Widgets.newEvent(context)), primary = true)
     }
 }
 
@@ -397,14 +398,14 @@ private fun chipTitle(m: MonthModel, inst: EventInstance): String = if (inst.key
 
 private fun dayDescription(m: MonthModel, day: LocalDate, events: List<EventInstance>): String = buildString {
     append(Fmt.dateWithDow(day))
-    if (day == m.today) append("，今天")
-    m.lunar[day]?.let { append("，農曆").append(it) }
+    if (day == m.today) append(L.t("，今天", ", today"))
+    m.lunar[day]?.let { append(L.t("，農曆", ", lunar ")).append(it) }
     if (events.isEmpty()) {
-        append("，沒有行程")
+        append(L.t("，沒有行程", ", no events"))
     } else {
-        append("，${events.size} 個行程：")
-        append(events.take(5).joinToString("、") { if (it.key in m.alarmOn) "${it.displayTitle}（鬧鐘）" else it.displayTitle })
-        if (events.size > 5) append(" 等")
+        append(L.t("，${events.size} 個行程：", ", ${events.size} events: "))
+        append(events.take(5).joinToString(L.t("、", ", ")) { if (it.key in m.alarmOn) L.t("${it.displayTitle}（鬧鐘）", "${it.displayTitle} (alarm)") else it.displayTitle })
+        if (events.size > 5) append(L.t(" 等", " and more"))
     }
 }
 

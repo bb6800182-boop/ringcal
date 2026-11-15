@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -121,9 +122,9 @@ private fun DayHeader(days: List<LocalDate>, lunar: Map<LocalDate, String>, toda
                 Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(Tok.rMd))
-                    .clickable(role = Role.Button, onClickLabel = "看這一天") { onPick(d) }
+                    .clickable(role = Role.Button, onClickLabel = L.t("看這一天", "View this day")) { onPick(d) }
                     .semantics(mergeDescendants = true) {
-                        contentDescription = Fmt.dateWithDow(d) + (if (isToday) "，今天" else "") + (lunar[d]?.let { "，農曆$it" } ?: "")
+                        contentDescription = Fmt.dateWithDow(d) + (if (isToday) L.t("，今天", ", today") else "") + (lunar[d]?.let { L.t("，農曆$it", ", lunar $it") } ?: "")
                     }
                     .padding(vertical = Tok.sXxs),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -163,7 +164,7 @@ private fun AllDayLanes(
     BoxWithConstraints(Modifier.fillMaxWidth().height((laneH + 2.dp) * lanes + Tok.sXxs).padding(end = Tok.sXs)) {
         val colW = (maxWidth - axisW) / days.size
         Text(
-            "整天",
+            L.t("整天", "All day"),
             style = TypeTok.caption,
             color = Tok.slate,
             textAlign = TextAlign.End,
@@ -179,8 +180,8 @@ private fun AllDayLanes(
                     .offset(x = axisW + colW * p.startCol + 1.5.dp, y = (laneH + 2.dp) * p.lane)
                     .width(colW * p.span - 3.dp)
                     .height(laneH)
-                    .clickable(role = Role.Button, onClickLabel = "看行程內容") { open(e) }
-                    .semantics { contentDescription = e.displayTitle + if (isAlarm(e)) "，有鬧鐘" else "" },
+                    .clickable(role = Role.Button, onClickLabel = L.t("看行程內容", "View event")) { open(e) }
+                    .semantics { contentDescription = e.displayTitle + if (isAlarm(e)) L.t("，有鬧鐘", ", has alarm") else "" },
                 style = TypeTok.bodySm,
             )
         }
@@ -195,7 +196,7 @@ private fun AllDayLanes(
                     .width(colW)
                     .height(laneH)
                     .padding(top = 3.dp)
-                    .semantics { contentDescription = "還有 $n 個整天行程" },
+                    .semantics { contentDescription = L.t("還有 $n 個整天行程", "$n more all-day events") },
             )
         }
     }

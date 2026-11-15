@@ -1,5 +1,6 @@
 package com.c520.likexiang.widget
 
+import com.c520.likexiang.L
 import android.content.Context
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
@@ -31,7 +32,7 @@ class VoiceWidget : GlanceAppWidget() {
             Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Image(
                     provider = ImageProvider(R.drawable.ic_mic),
-                    contentDescription = "用語音新增行程",
+                    contentDescription = L.t("用語音新增行程", "Add event by voice"),
                     colorFilter = ColorFilter.tint(Widgets.color(Tok.onPrimary)),
                     modifier = GlanceModifier.size(48.dp).padding(12.dp).cornerRadius(Tok.rFull)
                         .background(Widgets.color(Tok.primary))

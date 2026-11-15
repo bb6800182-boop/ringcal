@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -68,7 +69,7 @@ import com.c520.likexiang.ui.theme.TypeTok
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val DEFAULT_RINGTONE = "系統預設鬧鐘鈴聲"
+private val DEFAULT_RINGTONE: String get() = L.t("系統預設鬧鐘鈴聲", "System default alarm sound")
 
 /** 設定頁點一列跳出的對話框。 */
 private enum class SettingsDialog { OFFSET, DAY_START, CALENDAR, LICENSES, ACCENT, CANVAS }
@@ -104,123 +105,123 @@ fun SettingsScreen(vm: MainViewModel) {
     val defaultCalendar = defaultCalendarFor(calendars, settings)
 
     Column(Modifier.fillMaxSize().background(Tok.surface)) {
-        Box(Modifier.background(Tok.canvas)) { TopBar("設定", navIcon = R.drawable.ic_back, onNav = { vm.back() }) }
+        Box(Modifier.background(Tok.canvas)) { TopBar(L.t("設定", "Settings"), navIcon = R.drawable.ic_back, onNav = { vm.back() }) }
         Divider()
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Tok.sMd)) {
-            SettingsCard("鬧鐘", R.drawable.ic_alarm) {
-                SettingRow("預設提前時間", Fmt.leadLabel(settings.defaultOffsetMin), "電腦上加 ⏰ 的行程也用這個") { dialog = SettingsDialog.OFFSET }
+            SettingsCard(L.t("鬧鐘", "Alarms"), R.drawable.ic_alarm) {
+                SettingRow(L.t("預設提前時間", "Default lead time"), Fmt.leadLabel(settings.defaultOffsetMin), L.t("電腦上加 ⏰ 的行程也用這個", "Also used for events you mark with ⏰ on a computer")) { dialog = SettingsDialog.OFFSET }
                 CardDivider()
-                ChoiceBlock("稍後提醒", "響鈴時按「幾分後再響」，隔多久再響一次") {
+                ChoiceBlock(L.t("稍後提醒", "Snooze"), L.t("響鈴時按「幾分後再響」，隔多久再響一次", "How long to wait after you tap snooze on the ringing screen")) {
                     Settings.SNOOZE_OPTIONS.forEach { m ->
-                        OptionChip("$m 分鐘", m == settings.snoozeMin) { vm.updateSettings { it.copy(snoozeMin = m) } }
+                        OptionChip(L.n(m, "分鐘", "minute"), m == settings.snoozeMin) { vm.updateSettings { it.copy(snoozeMin = m) } }
                     }
                 }
                 CardDivider()
-                ChoiceBlock("沒人理會時響多久") {
+                ChoiceBlock(L.t("沒人理會時響多久", "Ring for how long if nobody responds")) {
                     Settings.RING_MINUTE_OPTIONS.forEach { m ->
-                        OptionChip("$m 分鐘", m == settings.ringMinutes) { vm.updateSettings { it.copy(ringMinutes = m) } }
+                        OptionChip(L.n(m, "分鐘", "minute"), m == settings.ringMinutes) { vm.updateSettings { it.copy(ringMinutes = m) } }
                     }
                 }
                 CardDivider()
-                SettingRow("鈴聲", ringtoneName) {
+                SettingRow(L.t("鈴聲", "Sound"), ringtoneName) {
                     val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
                         .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
                         .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
                         .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                        .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "鬧鐘鈴聲")
+                        .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, L.t("鬧鐘鈴聲", "Alarm sound"))
                         .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, settings.ringtoneUri?.let(Uri::parse))
                     try {
                         ringtoneLauncher.launch(intent)
                     } catch (_: ActivityNotFoundException) {
-                        vm.showMessage("這支手機沒有鈴聲選擇器")
+                        vm.showMessage(L.t("這支手機沒有鈴聲選擇器", "This phone has no ringtone picker"))
                     }
                 }
                 CardDivider()
-                SwitchRow("震動", settings.vibrate, onChange = { on -> vm.updateSettings { it.copy(vibrate = on) } })
+                SwitchRow(L.t("震動", "Vibrate"), settings.vibrate, onChange = { on -> vm.updateSettings { it.copy(vibrate = on) } })
                 CardDivider()
-                Box(Modifier.padding(vertical = Tok.sSm)) { OutlineButton("10 秒後試響", onClick = { vm.testAlarm() }) }
+                Box(Modifier.padding(vertical = Tok.sSm)) { OutlineButton(L.t("10 秒後試響", "Test ring in 10 seconds"), onClick = { vm.testAlarm() }) }
             }
 
-            SettingsCard("新增行程", R.drawable.ic_plus) {
-                SettingRow("預設日曆", defaultCalendar?.displayName ?: "沒有可寫入的日曆", defaultCalendar?.accountName?.takeIf { it != defaultCalendar.displayName }) {
+            SettingsCard(L.t("新增行程", "New event"), R.drawable.ic_plus) {
+                SettingRow(L.t("預設日曆", "Default calendar"), defaultCalendar?.displayName ?: L.t("沒有可寫入的日曆", "No writable calendar"), defaultCalendar?.accountName?.takeIf { it != defaultCalendar.displayName }) {
                     dialog = SettingsDialog.CALENDAR
                 }
                 CardDivider()
-                ChoiceBlock("預設行程長度") {
+                ChoiceBlock(L.t("預設行程長度", "Default event length")) {
                     Settings.DURATION_OPTIONS.forEach { m ->
-                        OptionChip(if (m % 60 == 0) "${m / 60} 小時" else "$m 分鐘", m == settings.defaultDurationMin) {
+                        OptionChip(if (m % 60 == 0) L.n(m / 60, "小時", "hour") else L.n(m, "分鐘", "minute"), m == settings.defaultDurationMin) {
                             vm.updateSettings { it.copy(defaultDurationMin = m) }
                         }
                     }
                 }
                 CardDivider()
-                ChoiceBlock("預設一般通知", "沒開鬧鐘的行程，由 Google 月曆發通知") {
-                    OptionChip("無", settings.defaultReminderMin == null) { vm.updateSettings { it.copy(defaultReminderMin = null) } }
+                ChoiceBlock(L.t("預設一般通知", "Default notification"), L.t("沒開鬧鐘的行程，由 Google 月曆發通知", "For events without an alarm; sent by Google Calendar")) {
+                    OptionChip(L.t("無", "None"), settings.defaultReminderMin == null) { vm.updateSettings { it.copy(defaultReminderMin = null) } }
                     Settings.REMINDER_OPTIONS.forEach { m ->
                         OptionChip(Fmt.reminderLabel(m), m == settings.defaultReminderMin) { vm.updateSettings { it.copy(defaultReminderMin = m) } }
                     }
                 }
             }
 
-            SettingsCard("檢視", R.drawable.ic_calendar) {
-                SettingRow("一天從幾點開始", Fmt.minuteOfDay(settings.dayStartMinute), "日檢視與「N 天」從這裡開始，更早的行程照樣顯示；整天行程的鬧鐘也在這時候響") {
+            SettingsCard(L.t("檢視", "View"), R.drawable.ic_calendar) {
+                SettingRow(L.t("一天從幾點開始", "Day starts at"), Fmt.minuteOfDay(settings.dayStartMinute), L.t("日檢視與「N 天」從這裡開始，更早的行程照樣顯示；整天行程的鬧鐘也在這時候響", "Day view and the N-day view start here; earlier events still show. All-day event alarms ring at this time too")) {
                     dialog = SettingsDialog.DAY_START
                 }
                 CardDivider()
-                ChoiceBlock("自訂天數", "「N 天」檢視一次看幾天，天數少格子就寬") {
+                ChoiceBlock(L.t("自訂天數", "Custom days"), L.t("「N 天」檢視一次看幾天，天數少格子就寬", "How many days the N-day view shows. Fewer days, wider columns")) {
                     Settings.CUSTOM_DAYS.forEach { n ->
-                        OptionChip("$n 天", n == settings.customDays) { vm.updateSettings { it.copy(customDays = n) } }
+                        OptionChip(L.n(n, "天", "day"), n == settings.customDays) { vm.updateSettings { it.copy(customDays = n) } }
                     }
                 }
                 CardDivider()
-                ChoiceBlock("自訂週數", "「N 週」檢視一次看幾週，週數少格子就大") {
+                ChoiceBlock(L.t("自訂週數", "Custom weeks"), L.t("「N 週」檢視一次看幾週，週數少格子就大", "How many weeks the N-week view shows. Fewer weeks, bigger cells")) {
                     Settings.CUSTOM_WEEKS.forEach { n ->
-                        OptionChip("$n 週", n == settings.customWeeks) { vm.updateSettings { it.copy(customWeeks = n) } }
+                        OptionChip(L.n(n, "週", "week"), n == settings.customWeeks) { vm.updateSettings { it.copy(customWeeks = n) } }
                     }
                 }
                 CardDivider()
-                ChoiceBlock("一週的第一天") {
-                    OptionChip("週一", settings.weekStartsMonday) { vm.updateSettings { it.copy(weekStartsMonday = true) } }
-                    OptionChip("週日", !settings.weekStartsMonday) { vm.updateSettings { it.copy(weekStartsMonday = false) } }
+                ChoiceBlock(L.t("一週的第一天", "Week starts on")) {
+                    OptionChip(L.t("週一", "Monday"), settings.weekStartsMonday) { vm.updateSettings { it.copy(weekStartsMonday = true) } }
+                    OptionChip(L.t("週日", "Sunday"), !settings.weekStartsMonday) { vm.updateSettings { it.copy(weekStartsMonday = false) } }
                 }
                 CardDivider()
-                SwitchRow("顯示農曆", settings.showLunar, onChange = { on -> vm.updateSettings { it.copy(showLunar = on) } })
+                SwitchRow(L.t("顯示農曆", "Show lunar calendar"), settings.showLunar, onChange = { on -> vm.updateSettings { it.copy(showLunar = on) } })
             }
 
-            SettingsCard("外觀", R.drawable.ic_palette) {
-                SettingRow("重點色", accentLabel(settings), "今天的圓、選取中的選項、按鈕與開關", swatch = Tok.primary) {
+            SettingsCard(L.t("外觀", "Appearance"), R.drawable.ic_palette) {
+                SettingRow(L.t("重點色", "Accent color"), accentLabel(settings), L.t("今天的圓、選取中的選項、按鈕與開關", "Today's circle, selected options, buttons and switches"), swatch = Tok.primary) {
                     dialog = SettingsDialog.ACCENT
                 }
                 CardDivider()
                 SettingRow(
-                    "底色",
+                    L.t("底色", "Background"),
                     canvasLabel(settings),
-                    "App 和桌面小工具的底色；選深色時，字和格線會跟著變淺色",
+                    L.t("App 和桌面小工具的底色；選深色時，字和格線會跟著變淺色", "Background of the app and widgets. With a dark color, text and grid lines turn light"),
                     swatch = Tok.canvas,
                 ) { dialog = SettingsDialog.CANVAS }
                 if (settings.accentColor != null || settings.canvasColor != null) {
                     CardDivider()
                     Box(Modifier.padding(vertical = Tok.sSm)) {
-                        OutlineButton("恢復預設顏色", onClick = { vm.updateSettings { it.copy(accentColor = null, canvasColor = null) } })
+                        OutlineButton(L.t("恢復預設顏色", "Reset colors"), onClick = { vm.updateSettings { it.copy(accentColor = null, canvasColor = null) } })
                     }
                 }
             }
 
-            SettingsCard("月曆小工具", R.drawable.ic_rows) {
-                ChoiceBlock("顯示範圍", "天數、週數跟上面的自訂檢視一樣；改了之後小工具回到今天") {
-                    OptionChip("整個月", settings.widgetRange == WidgetRange.MONTH) { vm.updateSettings { it.copy(widgetRange = WidgetRange.MONTH) } }
-                    OptionChip("${settings.customDays} 天", settings.widgetRange == WidgetRange.DAYS) { vm.updateSettings { it.copy(widgetRange = WidgetRange.DAYS) } }
-                    OptionChip("${settings.customWeeks} 週", settings.widgetRange == WidgetRange.WEEKS) { vm.updateSettings { it.copy(widgetRange = WidgetRange.WEEKS) } }
+            SettingsCard(L.t("月曆小工具", "Month widget"), R.drawable.ic_rows) {
+                ChoiceBlock(L.t("顯示範圍", "Range"), L.t("天數、週數跟上面的自訂檢視一樣；改了之後小工具回到今天", "Days and weeks follow the custom views above. Changing this moves the widget back to today")) {
+                    OptionChip(L.t("整個月", "Whole month"), settings.widgetRange == WidgetRange.MONTH) { vm.updateSettings { it.copy(widgetRange = WidgetRange.MONTH) } }
+                    OptionChip(L.n(settings.customDays, "天", "day"), settings.widgetRange == WidgetRange.DAYS) { vm.updateSettings { it.copy(widgetRange = WidgetRange.DAYS) } }
+                    OptionChip(L.n(settings.customWeeks, "週", "week"), settings.widgetRange == WidgetRange.WEEKS) { vm.updateSettings { it.copy(widgetRange = WidgetRange.WEEKS) } }
                 }
             }
 
-            SettingsCard("顯示的日曆", R.drawable.ic_list) {
+            SettingsCard(L.t("顯示的日曆", "Calendars shown"), R.drawable.ic_list) {
                 Box(Modifier.padding(bottom = Tok.sXs)) {
                     Column {
                         CalendarToggles(calendars, settings.hiddenCalendarIds, onColor = { colorFor = it }) { c, shown -> vm.toggleCalendar(c, shown) }
-                        Text("隱藏的日曆仍會照常響鬧鐘（鬧鐘是逐筆設定的）。", style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(top = Tok.sXxs))
+                        Text(L.t("隱藏的日曆仍會照常響鬧鐘（鬧鐘是逐筆設定的）。", "Hidden calendars still ring their alarms (alarms are set per event)."), style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(top = Tok.sXxs))
                         Text(
-                            "日曆的顏色只在曆刻響裡換，Google 月曆的顏色不變；行程自己設了顏色的，照行程的顏色。",
+                            L.t("日曆的顏色只在曆刻響裡換，Google 月曆的顏色不變；行程自己設了顏色的，照行程的顏色。", "Calendar colors change only in RingCal, not in Google Calendar. Events with their own color keep it."),
                             style = TypeTok.caption,
                             color = Tok.slate,
                             modifier = Modifier.padding(top = Tok.sXxs),
@@ -229,21 +230,21 @@ fun SettingsScreen(vm: MainViewModel) {
                 }
             }
 
-            SettingsCard("權限", R.drawable.ic_check) {
+            SettingsCard(L.t("權限", "Permissions"), R.drawable.ic_check) {
                 PermissionSection(vm)
             }
 
-            SettingsCard("關於", R.drawable.ic_info) {
+            SettingsCard(L.t("關於", "About"), R.drawable.ic_info) {
                 Column(Modifier.padding(vertical = Tok.sSm)) {
                     Text("${stringResource(R.string.app_name)} ${BuildConfig.VERSION_NAME}", style = TypeTok.body, color = Tok.ink)
-                    Text("行程存在你的 Google 月曆；這支 App 不連網路，資料不會離開手機。免費、開放原始碼（MIT 授權）。", style = TypeTok.caption, color = Tok.slate)
+                    Text(L.t("行程存在你的 Google 月曆；這支 App 不連網路，資料不會離開手機。免費、開放原始碼（MIT 授權）。", "Events are stored in your Google Calendar. This app has no network access, so your data never leaves the phone. Free and open source (MIT License)."), style = TypeTok.caption, color = Tok.slate)
                 }
                 CardDivider()
-                SettingRow("開放原始碼授權", "MIT・Apache 2.0・BSD") { dialog = SettingsDialog.LICENSES }
+                SettingRow(L.t("開放原始碼授權", "Open source licenses"), "MIT・Apache 2.0・BSD") { dialog = SettingsDialog.LICENSES }
                 CardDivider()
-                SettingRow("聯繫作者", "寄信給作者", caption = About.CONTACT_TEXT) { About.mail(context, "曆刻響", BuildConfig.VERSION_NAME) }
+                SettingRow(L.t("聯繫作者", "Contact"), L.t("寄信給作者", "Email the author"), caption = About.CONTACT_TEXT) { About.mail(context, L.t("曆刻響", "RingCal"), BuildConfig.VERSION_NAME) }
                 CardDivider()
-                SettingRow("更多軟體", "到 C520 看看", caption = About.MORE_TEXT) { About.more(context) }
+                SettingRow(L.t("更多軟體", "More apps"), L.t("到 C520 看看", "Visit C520"), caption = About.MORE_TEXT) { About.more(context) }
             }
             Spacer(Modifier.size(Tok.sXxl))
         }
@@ -255,7 +256,7 @@ fun SettingsScreen(vm: MainViewModel) {
             vm.updateSettings { it.copy(defaultOffsetMin = m) }
             dialog = null
         }, onDismiss = dismiss)
-        SettingsDialog.CALENDAR -> ChoiceDialog("預設日曆", dismiss) {
+        SettingsDialog.CALENDAR -> ChoiceDialog(L.t("預設日曆", "Default calendar"), dismiss) {
             calendars.filter { it.writable }.groupBy { it.accountName }.forEach { (account, list) ->
                 OptionGroupTitle(account)
                 list.forEach { c ->
@@ -272,21 +273,21 @@ fun SettingsScreen(vm: MainViewModel) {
             AlertDialog(
                 onDismissRequest = dismiss,
                 containerColor = Tok.canvas,
-                title = { Text("一天從幾點開始", style = TypeTok.titleMd, color = Tok.ink) },
+                title = { Text(L.t("一天從幾點開始", "Day starts at"), style = TypeTok.titleMd, color = Tok.ink) },
                 confirmButton = {
                     TextButton(onClick = {
                         // 最晚中午：再晚的話，早上的行程大多會變成「例外」往前延伸
                         vm.updateSettings { it.copy(dayStartMinute = (state.hour * 60 + state.minute).coerceAtMost(12 * 60)) }
                         dialog = null
-                    }) { DialogText("確定", primary = true) }
+                    }) { DialogText(L.t("確定", "OK"), primary = true) }
                 },
-                dismissButton = { TextButton(onClick = dismiss) { DialogText("取消", primary = false) } },
+                dismissButton = { TextButton(onClick = dismiss) { DialogText(L.t("取消", "Cancel"), primary = false) } },
                 text = { TimePicker(state = state) },
             )
         }
         SettingsDialog.LICENSES -> LicensesDialog(dismiss)
         SettingsDialog.ACCENT -> ColorPickerDialog(
-            title = "重點色",
+            title = L.t("重點色", "Accent color"),
             current = settings.accentColor,
             swatches = ACCENT_SWATCHES,
             defaultArgb = Palette.DEFAULT.primary.toArgb(),
@@ -297,7 +298,7 @@ fun SettingsScreen(vm: MainViewModel) {
             onDismiss = dismiss,
         ) { PalettePreview(Palette.of(it, settings.canvasColor)) }
         SettingsDialog.CANVAS -> ColorPickerDialog(
-            title = "底色",
+            title = L.t("底色", "Background"),
             current = settings.canvasColor,
             swatches = CANVAS_SWATCHES,
             defaultArgb = Palette.DEFAULT.canvas.toArgb(),
@@ -311,7 +312,7 @@ fun SettingsScreen(vm: MainViewModel) {
     }
     colorFor?.let { c ->
         ColorPickerDialog(
-            title = "「${c.displayName}」的顏色",
+            title = L.t("「${c.displayName}」的顏色", "Color of ${c.displayName}"),
             current = settings.calendarColors[c.id],
             swatches = CALENDAR_SWATCHES,
             defaultArgb = c.googleColor,
@@ -327,23 +328,23 @@ fun SettingsScreen(vm: MainViewModel) {
 
 /** 底色目前的值：自選的色碼；太中間的灰自動調過時註明。 */
 private fun canvasLabel(s: Settings): String {
-    val chosen = s.canvasColor ?: return "預設（白）"
+    val chosen = s.canvasColor ?: return L.t("預設（白）", "Default (white)")
     val label = "#${hexOf(chosen)}"
     return when {
         Tok.canvas.toArgb() == chosen or 0xFF000000.toInt() -> label
-        Tok.palette.isLight -> "$label（已自動調淺，字才看得清楚）"
-        else -> "$label（已自動調深，字才看得清楚）"
+        Tok.palette.isLight -> L.t("$label（已自動調淺，字才看得清楚）", "$label (lightened automatically to keep text readable)")
+        else -> L.t("$label（已自動調深，字才看得清楚）", "$label (darkened automatically to keep text readable)")
     }
 }
 
 /** 重點色目前的值：自選的色碼；太淺或太深、自動調過時註明，免得以為選錯。 */
 private fun accentLabel(s: Settings): String {
     val chosen = s.accentColor ?: Palette.DEFAULT.primary.toArgb()
-    val label = s.accentColor?.let { "#${hexOf(it)}" } ?: "預設（紫）"
+    val label = s.accentColor?.let { "#${hexOf(it)}" } ?: L.t("預設（紫）", "Default (purple)")
     return when {
         Tok.primary.toArgb() == chosen or 0xFF000000.toInt() -> label
-        Tok.palette.isLight -> "$label（已自動調深，字才看得清楚）"
-        else -> "$label（已自動調淺，字才看得清楚）"
+        Tok.palette.isLight -> L.t("$label（已自動調深，字才看得清楚）", "$label (darkened automatically to keep text readable)")
+        else -> L.t("$label（已自動調淺，字才看得清楚）", "$label (lightened automatically to keep text readable)")
     }
 }
 
@@ -422,9 +423,9 @@ private fun LicensesDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = Tok.canvas,
         shape = RoundedCornerShape(Tok.rXxl),
-        title = { Text("開放原始碼授權", style = TypeTok.titleMd, color = Tok.ink) },
+        title = { Text(L.t("開放原始碼授權", "Open source licenses"), style = TypeTok.titleMd, color = Tok.ink) },
         text = { Text(text, style = TypeTok.caption, color = Tok.charcoal, modifier = Modifier.verticalScroll(rememberScrollState())) },
-        confirmButton = { TextButton(onClick = onDismiss) { DialogText("關閉", primary = true) } },
+        confirmButton = { TextButton(onClick = onDismiss) { DialogText(L.t("關閉", "Close"), primary = true) } },
     )
 }
 
@@ -436,36 +437,36 @@ fun PermissionSection(vm: MainViewModel) {
     val calendarLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.onPermissionsChanged() }
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.onPermissionsChanged() }
 
-    PermissionRow("讀寫日曆", "讀取與新增 Google 月曆的行程", perms.calendar) {
+    PermissionRow(L.t("讀寫日曆", "Calendar access"), L.t("讀取與新增 Google 月曆的行程", "Read and add Google Calendar events"), perms.calendar) {
         calendarLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
     }
-    PermissionRow("通知", "沒有通知權限，響鈴時看不到畫面、也沒有地方按停", perms.notifications) {
+    PermissionRow(L.t("通知", "Notifications"), L.t("沒有通知權限，響鈴時看不到畫面、也沒有地方按停", "Without it, the ringing screen can't show and there is nowhere to stop the alarm"), perms.notifications) {
         notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        PermissionRow("全螢幕通知", "鎖定畫面時直接跳出響鈴畫面", perms.fullScreen) {
+        PermissionRow(L.t("全螢幕通知", "Full-screen notifications"), L.t("鎖定畫面時直接跳出響鈴畫面", "Show the ringing screen over the lock screen"), perms.fullScreen) {
             open(context, Intent(AndroidSettings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}")))
         }
     }
     if (!perms.exactAlarm) {
-        PermissionRow("鬧鐘與提醒", "準時觸發鬧鐘", false) {
+        PermissionRow(L.t("鬧鐘與提醒", "Alarms & reminders"), L.t("準時觸發鬧鐘", "Fire alarms exactly on time"), false) {
             open(context, Intent(AndroidSettings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}")))
         }
     }
-    PermissionRow("鬧鐘音量", if (perms.alarmVolumeOk) "鬧鐘音量大於 0" else "鬧鐘音量是 0，鬧鐘不會出聲", perms.alarmVolumeOk, okText = "正常", fixText = "調整") {
+    PermissionRow(L.t("鬧鐘音量", "Alarm volume"), if (perms.alarmVolumeOk) L.t("鬧鐘音量大於 0", "Alarm volume is above 0") else L.t("鬧鐘音量是 0，鬧鐘不會出聲", "Alarm volume is 0, so alarms are silent"), perms.alarmVolumeOk, okText = L.t("正常", "OK"), fixText = L.t("調整", "Adjust")) {
         open(context, Intent(AndroidSettings.ACTION_SOUND_SETTINGS))
     }
-    PermissionRow("電池用量「不受限制」", "讓電腦上改的行程更快同步到鬧鐘", perms.batteryUnrestricted) {
+    PermissionRow(L.t("電池用量「不受限制」", "Battery usage \"Unrestricted\""), L.t("讓電腦上改的行程更快同步到鬧鐘", "Lets changes made on a computer reach the alarms sooner"), perms.batteryUnrestricted) {
         open(context, Intent(AndroidSettings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}")))
     }
     Text(
-        "按了沒反應？可能是先前選過「不允許」，請到系統設定開啟。",
+        L.t("按了沒反應？可能是先前選過「不允許」，請到系統設定開啟。", "Nothing happens? You may have chosen \"Don't allow\" before. Turn it on in system settings."),
         style = TypeTok.caption,
         color = Tok.slate,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 44.dp)
-            .clickable(role = Role.Button, onClickLabel = "開啟系統的 App 設定") {
+            .clickable(role = Role.Button, onClickLabel = L.t("開啟系統的 App 設定", "Open the app's system settings")) {
                 open(context, Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
             }
             .padding(vertical = Tok.sXs),
@@ -477,8 +478,8 @@ private fun PermissionRow(
     title: String,
     desc: String,
     granted: Boolean,
-    okText: String = "已開啟",
-    fixText: String = "開啟",
+    okText: String = L.t("已開啟", "On"),
+    fixText: String = L.t("開啟", "Turn on"),
     onRequest: () -> Unit,
 ) {
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = Tok.sXxs), verticalAlignment = Alignment.CenterVertically) {
@@ -515,9 +516,9 @@ fun WizardScreen(vm: MainViewModel) {
             AppIcon(R.drawable.ic_alarm, null, Tok.onPrimary, 30.dp)
         }
         Spacer(Modifier.size(Tok.sMd))
-        TitleBlock("歡迎使用${stringResource(R.string.app_name)}", null)
+        TitleBlock(L.t("歡迎使用${stringResource(R.string.app_name)}", "Welcome to ${stringResource(R.string.app_name)}"), null)
         Text(
-            "行程照樣存在你的 Google 月曆；建立行程時打開「鬧鐘提醒」，時間到就會像鬧鐘一樣響到你按掉。先把下面幾項打開，前兩項是必要的：",
+            L.t("行程照樣存在你的 Google 月曆；建立行程時打開「鬧鐘提醒」，時間到就會像鬧鐘一樣響到你按掉。先把下面幾項打開，前兩項是必要的：", "Events stay in your Google Calendar. Turn on \"Alarm\" when you create an event and it rings like an alarm clock until you dismiss it. Turn on the items below first; the first two are required:"),
             style = TypeTok.body,
             color = Tok.charcoal,
             modifier = Modifier.padding(top = Tok.sXs, bottom = Tok.sMd),
@@ -525,16 +526,16 @@ fun WizardScreen(vm: MainViewModel) {
         PermissionSection(vm)
         Spacer(Modifier.size(Tok.sMd))
         if (perms.notifications) {
-            OutlineButton("10 秒後試響", onClick = { vm.testAlarm() })
+            OutlineButton(L.t("10 秒後試響", "Test ring in 10 seconds"), onClick = { vm.testAlarm() })
         } else {
-            Text("開了通知權限後，可以先試響一次。", style = TypeTok.caption, color = Tok.slate)
+            Text(L.t("開了通知權限後，可以先試響一次。", "Once notifications are allowed, you can try a test ring."), style = TypeTok.caption, color = Tok.slate)
         }
         Spacer(Modifier.size(Tok.sXl))
         PrimaryButton(
             when {
-                !perms.calendar -> "請先允許讀寫日曆"
-                !perms.notifications -> "請先允許通知"
-                else -> "開始使用"
+                !perms.calendar -> L.t("請先允許讀寫日曆", "Allow calendar access first")
+                !perms.notifications -> L.t("請先允許通知", "Allow notifications first")
+                else -> L.t("開始使用", "Get started")
             },
             onClick = { vm.finishWizard() },
             enabled = essentials,

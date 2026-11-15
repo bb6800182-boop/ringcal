@@ -1,5 +1,6 @@
 package com.c520.likexiang.voice
 
+import com.c520.likexiang.L
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -25,6 +26,7 @@ import com.c520.likexiang.data.AlarmRules
 import com.c520.likexiang.data.EventDraft
 import com.c520.likexiang.data.SyncMode
 import com.c520.likexiang.data.VoiceParser
+import com.c520.likexiang.data.VoiceParserEn
 import com.c520.likexiang.data.defaultCalendarFor
 import com.c520.likexiang.ui.Fmt
 import kotlinx.coroutines.Dispatchers
@@ -56,14 +58,14 @@ class VoiceActivity : ComponentActivity() {
             recognize.launch(
                 Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                     .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-TW")
+                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (L.zh) "zh-TW" else java.util.Locale.getDefault().toLanguageTag())
                     // 不加 EXTRA_PREFER_OFFLINE：它的意思是「只用離線」，手機沒下載中文（台灣）離線語言包就直接失敗；
                     // 不加時由系統自己選，有離線包就用離線
                     .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                    .putExtra(RecognizerIntent.EXTRA_PROMPT, "說日期、時間和行程，例如「明天下午三點開會」"),
+                    .putExtra(RecognizerIntent.EXTRA_PROMPT, L.t("說日期、時間和行程，例如「明天下午三點開會」", "Say the date, time and event, for example \"meeting tomorrow at 3 pm\"")),
             )
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "這支手機沒有語音輸入，請改用＋新增", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, L.t("這支手機沒有語音輸入，請改用＋新增", "This phone has no voice input. Use + to add events"), Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -77,7 +79,7 @@ class VoiceActivity : ComponentActivity() {
             }
             when (outcome) {
                 // 用 applicationContext：Toast 跟著 Activity 的話，下一行 finish() 會把它提早收掉
-                is Outcome.Created -> Toast.makeText(app, "已建立：${outcome.title}\n${outcome.time}\n存到「${outcome.calendar}」", Toast.LENGTH_LONG).show()
+                is Outcome.Created -> Toast.makeText(app, L.t("已建立：${outcome.title}\n${outcome.time}\n存到「${outcome.calendar}」", "Created: ${outcome.title}\n${outcome.time}\nSaved to ${outcome.calendar}"), Toast.LENGTH_LONG).show()
                 is Outcome.NeedsEditor -> openEditor(outcome.result)
             }
             finish()
@@ -119,7 +121,9 @@ class VoiceActivity : ComponentActivity() {
             val store = ServiceLocator.store(app)
             val repo = ServiceLocator.repo(app)
             val settings = store.settingsNow()
-            val r = VoiceParser.parse(text, LocalDateTime.now(), settings.defaultDurationMin)
+            // 英文介面用英文規則（辨識語言也跟著手機）
+            val r = if (L.zh) VoiceParser.parse(text, LocalDateTime.now(), settings.defaultDurationMin)
+            else VoiceParserEn.parse(text, LocalDateTime.now(), settings.defaultDurationMin)
             val start = r.start
             val end = r.end
             if (!r.complete || start == null || end == null || !repo.hasWritePermission()) return Outcome.NeedsEditor(r)
@@ -161,17 +165,17 @@ class VoiceActivity : ComponentActivity() {
             )
             val publicVersion = Notification.Builder(context, Notifications.CH_VOICE)
                 .setSmallIcon(R.drawable.ic_stat_alarm)
-                .setContentTitle("已用語音建立行程")
+                .setContentTitle(L.t("已用語音建立行程", "Event added by voice"))
                 .build()
-            val detail = c.time + if (c.alarm) "・鬧鐘" else ""
+            val detail = c.time + if (c.alarm) L.t("・鬧鐘", " · Alarm") else ""
             nm.notify(
                 c.eventId.hashCode(),
                 Notification.Builder(context, Notifications.CH_VOICE)
                     .setSmallIcon(R.drawable.ic_stat_alarm)
-                    .setContentTitle("已建立：${c.title}")
+                    .setContentTitle(L.t("已建立：${c.title}", "Created: ${c.title}"))
                     .setContentText(detail)
                     // 上傳到 Google 由 Android 的同步負責，通常幾十秒到幾分鐘，手機過熱或沒網路時會更久
-                    .setStyle(Notification.BigTextStyle().bigText("$detail\n存到「${c.calendar}」，同步後會出現在 Google 月曆\n點這裡修改或刪除"))
+                    .setStyle(Notification.BigTextStyle().bigText(L.t("$detail\n存到「${c.calendar}」，同步後會出現在 Google 月曆\n點這裡修改或刪除", "$detail\nSaved to ${c.calendar}; it appears in Google Calendar after sync\nTap to edit or delete")))
                     .setVisibility(Notification.VISIBILITY_PRIVATE)
                     .setPublicVersion(publicVersion)
                     .setContentIntent(open)

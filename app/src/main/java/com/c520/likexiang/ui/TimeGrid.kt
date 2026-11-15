@@ -1,5 +1,6 @@
 package com.c520.likexiang.ui
 
+import com.c520.likexiang.L
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -172,14 +173,14 @@ fun TimeGrid(
                     EventBlock(
                         e = e,
                         alarm = alarm,
-                        ringLabel = if (alarm) "${Fmt.time(ringAt(e))} 響鈴" else null,
+                        ringLabel = if (alarm) L.t("${Fmt.time(ringAt(e))} 響鈴", "Rings ${Fmt.time(ringAt(e))}") else null,
                         titleStyle = titleStyle,
                         lineStyle = lineStyle,
                         modifier = Modifier
                             .offset(x = axisW + colW * ci + w * p.column + 1.dp, y = hourH * ((p.startMin - startHour * 60) / 60f))
                             .width(w - 2.dp)
                             .height(hourH * ((p.endMin - p.startMin) / 60f) - 2.dp)
-                            .clickable(role = Role.Button, onClickLabel = "看行程內容") { onEventClick(e) },
+                            .clickable(role = Role.Button, onClickLabel = L.t("看行程內容", "View event")) { onEventClick(e) },
                     )
                 }
             }
@@ -200,9 +201,9 @@ fun TimeGrid(
 
 @Composable
 private fun EventBlock(e: EventInstance, alarm: Boolean, ringLabel: String?, titleStyle: TextStyle, lineStyle: TextStyle, modifier: Modifier) {
-    val desc = "${e.displayTitle}，${Fmt.time(e.begin)} 到 ${Fmt.time(e.end)}" +
-        (if (e.location.isNotBlank()) "，${e.location}" else "") +
-        (ringLabel?.let { "，$it" } ?: "")
+    val desc = L.t("${e.displayTitle}，${Fmt.time(e.begin)} 到 ${Fmt.time(e.end)}", "${e.displayTitle}, ${Fmt.time(e.begin)} to ${Fmt.time(e.end)}") +
+        (if (e.location.isNotBlank()) L.t("，", ", ") + e.location else "") +
+        (ringLabel?.let { L.t("，", ", ") + it } ?: "")
     val fg = Tok.onEventColor(e.color)
     Box(
         modifier
@@ -227,7 +228,7 @@ private fun EventBlock(e: EventInstance, alarm: Boolean, ringLabel: String?, tit
                 }
                 if (showTime) {
                     Text(
-                        "${Fmt.time(e.begin)}–${Fmt.time(e.end)}" + if (e.location.isNotBlank()) "・${e.location}" else "",
+                        "${Fmt.time(e.begin)}–${Fmt.time(e.end)}" + if (e.location.isNotBlank()) L.t("・", " · ") + e.location else "",
                         style = lineStyle,
                         color = fg,
                         maxLines = 1,
