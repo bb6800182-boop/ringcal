@@ -6,16 +6,17 @@ plugins {
 }
 
 android {
+    // 程式碼的套件（namespace）維持 com.c520.likexiang；對外的套件名稱（applicationId）2026-11-15 隨英文名改成 com.c520.ringcal
     namespace = "com.c520.likexiang"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.c520.likexiang"
+        applicationId = "com.c520.ringcal"
         // Android 13 起才有 USE_EXACT_ALARM 與通知權限，從 33 起跳可省掉舊版相容分支
         minSdk = 33
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.2.2"
+        versionCode = 11
+        versionName = "1.3.0"
     }
 
     // 簽章放在專案資料夾旁邊的 calendar-alarm-signing（不進版控；用 Dropbox 同步，每台電腦都用同一份）：

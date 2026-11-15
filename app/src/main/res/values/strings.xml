@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">曆刻響</string>
-    <string name="widget_month">月曆</string>
-    <string name="widget_month_desc">整個月的行程與農曆，點日期看當天</string>
-    <string name="widget_agenda">行程清單</string>
-    <string name="widget_agenda_desc">今天起的行程，有鬧鐘的標示 ⏰</string>
-    <string name="widget_voice">語音新增</string>
-    <string name="widget_voice_desc">按一下說出日期、時間和行程，直接加到月曆</string>
+    <string name="app_name">RingCal</string>
+    <string name="widget_month">Month</string>
+    <string name="widget_month_desc">The whole month with events and lunar dates. Tap a date to see that day</string>
+    <string name="widget_agenda">Agenda</string>
+    <string name="widget_agenda_desc">Events from today on. Those with an alarm are marked ⏰</string>
+    <string name="widget_voice">Add by voice</string>
+    <string name="widget_voice_desc">Tap and say the date, time and event to add it to the calendar (Chinese only for now)</string>
 </resources>

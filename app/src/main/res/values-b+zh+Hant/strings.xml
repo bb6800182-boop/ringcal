@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 中文要放兩份、內容一樣：values-b+zh+Hant（台灣、香港的繁體手機）和 values-zh（其他中文）。只放 values-zh 的話，Android 會把它當簡體，台灣的手機反而顯示英文。 -->
+<resources>
+    <string name="app_name">曆刻響</string>
+    <string name="widget_month">月曆</string>
+    <string name="widget_month_desc">整個月的行程與農曆，點日期看當天</string>
+    <string name="widget_agenda">行程清單</string>
+    <string name="widget_agenda_desc">今天起的行程，有鬧鐘的標示 ⏰</string>
+    <string name="widget_voice">語音新增</string>
+    <string name="widget_voice_desc">按一下說出日期、時間和行程，直接加到月曆</string>
+</resources>
