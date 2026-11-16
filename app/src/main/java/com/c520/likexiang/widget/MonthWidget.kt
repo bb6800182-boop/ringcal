@@ -2,7 +2,11 @@ package com.c520.likexiang.widget
 
 import com.c520.likexiang.L
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
@@ -24,6 +29,7 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
@@ -38,16 +44,13 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.ColumnScope
-import androidx.glance.layout.RowScope
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.state.PreferencesGlanceStateDefinition
@@ -59,7 +62,6 @@ import com.c520.likexiang.R
 import com.c520.likexiang.data.EventInstance
 import com.c520.likexiang.data.WidgetRange
 import com.c520.likexiang.ui.Fmt
-import com.c520.likexiang.ui.layout.PlacedSpan
 import com.c520.likexiang.ui.layout.WeekLayout
 import com.c520.likexiang.ui.layout.WeekLayoutEngine
 import com.c520.likexiang.ui.layout.WeekSpan
@@ -74,11 +76,11 @@ import java.time.ZoneId
  */
 class MonthWidget : GlanceAppWidget() {
     /**
-     * 給桌面幾種高度的版面，桌面依小工具「實際」大小挑放得下的最大一種（Android 12 起由系統挑）。
-     * 不用 Exact：Nova 回報的尺寸常常是整個螢幕，照回報算會多排車道、被切掉。
-     * 版面越多，每次更新傳給桌面的資料越大，所以只給四種；寬度都用最小值，實際寬度由權重平分。
+     * 只給一種版面：月曆格是整張畫好的圖（見 [GridPainter]），圖的大小照桌面回報的小工具大小算，
+     * 顯示時拉到整格，所以回報的大小不準也只是稍微變形，不會被切掉。
+     * （1.4.1 以前給四種高度、每個行程一個元件；行程多的月份會撞到一個版面 500 個元件的上限，只好少排幾條。）
      */
-    override val sizeMode = SizeMode.Responsive(setOf(260.dp, 400.dp, 560.dp, 740.dp).map { DpSize(180.dp, it) }.toSet())
+    override val sizeMode = SizeMode.Single
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -86,6 +88,7 @@ class MonthWidget : GlanceAppWidget() {
         // 先載好再顯示，更新時不會閃一下「載入中」
         val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         val first = WidgetData.month(context, prefs[Widgets.OFFSET] ?: 0, prefs[Widgets.REFRESH] ?: 0)
+        val size = widgetSize(context, id)
         provideContent {
             val offset = currentState(Widgets.OFFSET) ?: 0
             val refresh = currentState(Widgets.REFRESH) ?: 0
@@ -93,9 +96,20 @@ class MonthWidget : GlanceAppWidget() {
             LaunchedEffect(offset, refresh) {
                 if (offset != model.offset || refresh != model.refresh) model = WidgetData.month(context, offset, refresh)
             }
-            MonthContent(model)
+            MonthContent(model, size)
         }
     }
+}
+
+/** 小工具目前的大小（直向或橫向那一組）；桌面沒回報就當成整個螢幕。不會超過螢幕。 */
+private suspend fun widgetSize(context: Context, id: GlanceId): DpSize {
+    val dm = context.resources.displayMetrics
+    val screen = DpSize((dm.widthPixels / dm.density).dp, (dm.heightPixels / dm.density).dp)
+    val sizes = runCatching { GlanceAppWidgetManager(context).getAppWidgetSizes(id) }.getOrDefault(emptyList())
+    if (sizes.isEmpty()) return screen
+    val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val s = if (landscape) sizes.maxBy { it.width } else sizes.minBy { it.width }
+    return DpSize(minOf(s.width, screen.width), minOf(s.height, screen.height))
 }
 
 class MonthWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -126,15 +140,8 @@ class ShiftMonthAction : ActionCallback {
 private val HEADER_H = 40.dp
 private val ROOT_PAD = 2.dp
 
-/** 色塊之間的間距，跟 App 一樣 2dp（DESIGN.md「Layout」）。小工具沒有外距，用外層的 padding 留出來。 */
+/** 色塊之間的間距，跟 App 一樣 2dp（DESIGN.md「Layout」）。 */
 private val CHIP_GAP = 2.dp
-
-// Glance 一個版面最多 500 個 view：整個月實際用到的不能超過（留一點餘裕），超過就少排一條車道
-private const val VIEW_BUDGET = 480
-private const val FIXED_VIEWS = 32 // 頂部列、星期列、格線背景、今天的圓
-private const val WEEK_VIEWS = 3 // 每週：外框、週格線、七天那一列
-private const val CELL_VIEWS = 6 // 每格：可點的格子（Glance 會多包 2 層）＋日期列 3 個
-private const val MAX_LANES = 9 // 一格最多 10 個子元件：日期列＋9 條
 
 /** 月曆格的尺寸，跟著系統字級放大（小工具的字會跟著字級變大，高度也要跟著）。 */
 internal class GridDims(fontScale: Float) {
@@ -147,69 +154,30 @@ internal class GridDims(fontScale: Float) {
     /** 一條車道：色塊（9sp 一行字）加下面的間距。 */
     val slot = 11.dp * fontScale + 3.dp + CHIP_GAP
 
-    /** 星期列（估計值，寧可估大，車道才不會排太多）。 */
+    /** 星期列的高度。 */
     val weekday = 10.dp * fontScale * 1.5f + 4.dp
 }
 
 /**
- * 一格放幾條色塊：這個版面高度放得下幾條，再受 view 數量上限限制（這裡先照每條 1 個 view 估；
- * 色塊外面留間距的那一層由 [monthViews] 照實際的行程算）。放不下的行程在最後一條顯示「+N」。
- * 0 表示連一條都放不下，改用色點（每格最多 4 個 view，6 週也不會超過上限）。
+ * 一週那一列的高度放得下幾條色塊：扣掉上方 1dp 格線和日期列，最後一條下面的間距可以被切掉。
+ * 排到格子滿為止，放不下的行程在最後一條顯示「+N」；0 表示只放得下日期，改用色點。
  */
-internal fun lanesFor(height: Dp, weeks: Int, d: GridDims, cols: Int = 7): Int {
-    val grid = height - ROOT_PAD * 2 - HEADER_H - d.weekday
-    val perWeek = grid / weeks - 1.dp - d.label // 每週上方 1dp 格線
-    val fit = ((perWeek + CHIP_GAP) / d.slot).toInt() // 最後一條下面的間距可以被切掉
-    val budget = (VIEW_BUDGET - FIXED_VIEWS - WEEK_VIEWS * weeks) / (cols * weeks) - CELL_VIEWS
-    return minOf(fit, budget, MAX_LANES).coerceAtLeast(0)
+internal fun lanesForRow(rowHeight: Dp, d: GridDims): Int {
+    val room = rowHeight - 1.dp - d.label
+    return ((room + CHIP_GAP) / d.slot).toInt().coerceAtLeast(0)
 }
 
-/**
- * 實際會用幾個 view：每格的日期列與畫到的車道（到最後一個有東西的車道為止），
- * 格子裡每個色塊外面留間距的那一層，加上跨日行程的上層。
- */
-internal fun monthViews(layouts: List<WeekLayout?>, cols: Int, lanes: Int): Int = FIXED_VIEWS + layouts.sumOf { layout ->
-    val drawn = IntArray(cols) // 每格畫幾條車道
-    layout?.placed?.forEach { p ->
-        val last = p.startCol + p.span - 1 // 跨日行程在格子裡只畫最後一天
-        drawn[last] = maxOf(drawn[last], p.lane + 1)
-    }
-    layout?.more?.keys?.forEach { col -> drawn[col] = lanes }
-    // 每筆行程在格子裡畫一段（跨日的畫最後一天），外面各多一層 Box
-    WEEK_VIEWS + cols * CELL_VIEWS + drawn.sum() + (layout?.placed?.size ?: 0) + barViews(layout, cols)
-}
+/** 月曆格（圖）的大小：小工具扣掉外距、頂部列和星期列。 */
+internal fun gridSize(widget: DpSize, d: GridDims): DpSize = DpSize(
+    (widget.width - ROOT_PAD * 2).coerceAtLeast(120.dp),
+    (widget.height - ROOT_PAD * 2 - HEADER_H - d.weekday).coerceAtLeast(40.dp),
+)
 
-/**
- * 一週的跨日行程上層（[Bars]）最多幾個 view：外框 Box、Bars 的 Column，
- * 每條有跨日行程的車道一個 Row、每欄一段、前面一個 Spacer。
- */
-internal fun barViews(layout: WeekLayout?, cols: Int): Int {
-    val lanes = layout?.placed?.filter { it.span > 1 }?.map { it.lane }?.distinct()?.size ?: 0
-    return if (lanes == 0) 0 else 2 + lanes * (cols + 2)
-}
-
-/**
- * 日與日之間的直線：小工具不能畫線，用一張「欄數×100」×1 的小圖當月曆格背景拉伸到整格，
- * 每 100 像素（一欄）最右邊 2 像素是格線色（格線色跟著自選的底色換）。色塊蓋在線上，跨日行程才接得起來。
- */
-private val columnLines = HashMap<Pair<Int, Int>, Bitmap>()
-
-private fun columnLines(cols: Int): Bitmap = synchronized(columnLines) {
-    val line = Tok.hairline.toArgb()
-    columnLines.getOrPut(cols to line) {
-        Bitmap.createBitmap(cols * 100, 1, Bitmap.Config.ARGB_8888).apply {
-            for (col in 1 until cols) {
-                setPixel(col * 100 - 2, 0, line)
-                setPixel(col * 100 - 1, 0, line)
-            }
-        }
-    }
-}
-
-/** 整個小工具用權重平分，一定滿版；高度只決定一格放幾條色塊。 */
+/** 整個小工具：頂部列、星期列，下面是整張畫好的月曆格，上面疊一層透明的格子接點擊。 */
 @Composable
-private fun MonthContent(m: MonthModel) {
-    val dims = GridDims(LocalContext.current.resources.configuration.fontScale)
+private fun MonthContent(m: MonthModel, widget: DpSize) {
+    val context = LocalContext.current
+    val dims = GridDims(context.resources.configuration.fontScale)
     Column(
         GlanceModifier.fillMaxSize().background(Widgets.color(Tok.canvas)).cornerRadius(Tok.rXl).padding(ROOT_PAD),
     ) {
@@ -219,19 +187,172 @@ private fun MonthContent(m: MonthModel) {
             return@Column
         }
         val cols = m.weeks.first().size
-        WeekdayRow(m.weeks.first())
+        WeekdayRow(m.weeks.first(), dims)
         val zone = ZoneId.systemDefault()
         val spans = m.weeks.map { weekSpans(m.instances, it.first(), zone, cols) }
-        var lanes = lanesFor(LocalSize.current.height, m.weeks.size, dims, cols)
-        fun layoutWith(n: Int) = spans.map { if (n > 0) WeekLayoutEngine.layout(it, n) else null }
-        var layouts = layoutWith(lanes)
-        // 跨日行程的上層會多用一些 view：整個月超過上限就少排一條車道
-        while (lanes > 0 && monthViews(layouts, cols, lanes) > VIEW_BUDGET) {
-            lanes--
-            layouts = layoutWith(lanes)
+        val grid = gridSize(widget, dims)
+        val lanes = lanesForRow(grid.height / m.weeks.size, dims)
+        val layouts = spans.map { if (lanes > 0) WeekLayoutEngine.layout(it, lanes) else null }
+        val bitmap = GridPainter(context, m, dims, cols, lanes).draw(grid, spans, layouts)
+        Box(GlanceModifier.fillMaxWidth().defaultWeight()) {
+            Image(ImageProvider(bitmap), contentDescription = null, modifier = GlanceModifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+            // 點擊與螢幕閱讀器：每天一格透明的格子，疊在圖上面
+            Column(GlanceModifier.fillMaxSize()) {
+                m.weeks.forEachIndexed { i, week ->
+                    Row(GlanceModifier.fillMaxWidth().defaultWeight()) {
+                        week.forEachIndexed { col, day ->
+                            val events = eventsOn(m, spans[i], col)
+                            Box(
+                                GlanceModifier.defaultWeight().fillMaxHeight()
+                                    .clickable(actionStartActivity(Widgets.openDay(context, day)))
+                                    .semantics { contentDescription = dayDescription(m, day, events) },
+                            ) {}
+                        }
+                    }
+                }
+            }
         }
-        Column(GlanceModifier.fillMaxWidth().defaultWeight().background(ImageProvider(columnLines(cols)))) {
-            m.weeks.forEachIndexed { i, week -> Week(m, week, spans[i], layouts[i], dims, lanes) }
+    }
+}
+
+/** 這一欄（這一天）的行程，照月曆的順序。 */
+private fun eventsOn(m: MonthModel, spans: List<WeekSpan>, col: Int): List<EventInstance> =
+    spans.filter { col in it.startCol until it.startCol + it.span }.sortedBy { it.sortKey }.map { m.instances[it.id] }
+
+/**
+ * 把月曆格畫成一張圖：格線、今天的淡底、日期與農曆、行程色塊（跨日的接成一條）、「+N」。
+ * 小工具一個版面最多 500 個元件，一個行程一個元件的話，行程多的月份排不滿格子；畫成圖就沒有這個上限。
+ * 樣式跟 App 的月曆格同一組 token（DESIGN.md）。
+ */
+private class GridPainter(context: Context, private val m: MonthModel, private val d: GridDims, private val cols: Int, private val lanes: Int) {
+    private val density = context.resources.displayMetrics.density
+    private val fontScale = context.resources.configuration.fontScale
+    private val medium = Typeface.create(Typeface.DEFAULT, 500, false)
+    private val bold = Typeface.create(Typeface.DEFAULT, 700, false)
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    private fun px(v: Dp): Float = v.value * density
+
+    private fun text(sp: Float, color: Int, face: Typeface = Typeface.DEFAULT) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = sp * density * fontScale
+        this.color = color
+        typeface = face
+    }
+
+    /** 文字垂直置中在 cy 的基線位置。 */
+    private fun baseline(cy: Float, p: Paint): Float = cy - (p.ascent() + p.descent()) / 2
+
+    fun draw(size: DpSize, spans: List<List<WeekSpan>>, layouts: List<WeekLayout?>): Bitmap {
+        val w = px(size.width).toInt().coerceAtLeast(1)
+        val h = px(size.height).toInt().coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bitmap)
+        val rowH = h.toFloat() / m.weeks.size
+        val colW = w.toFloat() / cols
+        val gap = px(CHIP_GAP)
+        val line = px(1.dp)
+        val hairline = Tok.hairline.toArgb()
+
+        // 日與日之間的直線：畫在每欄右邊留的間距裡，色塊蓋在上面，跨日行程才接得起來
+        fill.color = hairline
+        for (col in 1 until cols) c.drawRect(col * colW - line, 0f, col * colW, h.toFloat(), fill)
+
+        m.weeks.forEachIndexed { i, week ->
+            val top = i * rowH
+            fill.color = hairline
+            c.drawRect(0f, top, w.toFloat(), top + line, fill)
+            week.forEachIndexed { col, day ->
+                val left = col * colW
+                val right = left + colW - gap
+                if (day == m.today) {
+                    // 今天整格鋪淡底（重點色疊在底色上），一眼找得到
+                    fill.color = Tok.todayTint.toArgb()
+                    c.drawRect(left, top + line, right, top + rowH, fill)
+                }
+                label(c, day, left, right, top + line)
+            }
+            val lanesTop = top + line + px(d.label)
+            val layout = layouts[i]
+            if (layout == null) {
+                week.indices.forEach { col -> dots(c, eventsOn(m, spans[i], col), col * colW, col * colW + colW - gap, lanesTop) }
+            } else {
+                val slot = px(d.slot)
+                layout.placed.forEach { p ->
+                    val y = lanesTop + p.lane * slot
+                    chip(c, m.instances[p.id], p.startCol * colW, (p.startCol + p.span) * colW - gap, y, y + slot - gap, multiDay = p.span > 1)
+                }
+                layout.more.forEach { (col, n) ->
+                    val y = lanesTop + (lanes - 1) * slot
+                    val p = text(9f, Tok.slate.toArgb(), medium).apply { textAlign = Paint.Align.CENTER }
+                    c.drawText("+$n", col * colW + (colW - gap) / 2, baseline(y + (slot - gap) / 2, p), p)
+                }
+            }
+        }
+        return bitmap
+    }
+
+    /** 日期列：數字置中，今天是紫色圓（DESIGN.md today-marker），後面接農曆。 */
+    private fun label(c: Canvas, day: LocalDate, left: Float, right: Float, top: Float) {
+        val isToday = day == m.today
+        val inMonth = m.month == null || day.month == m.month.month
+        val lunar = m.lunar[day]?.takeIf { it.isNotEmpty() }
+        val number = "${day.dayOfMonth}"
+        val cy = top + px(d.label) / 2
+        val numberPaint = if (isToday) text(11f, Tok.onPrimary.toArgb(), bold) else text(11f, (if (inMonth) Tok.ink else Tok.steel).toArgb(), medium)
+        val mark = px(d.mark)
+        val numberW = if (isToday) mark else numberPaint.measureText(number)
+        val lunarPaint = lunar?.let {
+            text(8f, (if (isToday) Tok.primary else if (inMonth) Tok.slate else Tok.steel).toArgb())
+        }
+        val lunarGap = px(2.dp)
+        val lunarW = if (lunar != null && lunarPaint != null) lunarGap + lunarPaint.measureText(lunar) else 0f
+        // 放不下就只置中數字，農曆往右排、超出的部分切掉
+        val total = if (numberW + lunarW <= right - left) numberW + lunarW else numberW
+        val x = left + (right - left - total) / 2
+        if (isToday) {
+            fill.color = Tok.primary.toArgb()
+            c.drawCircle(x + mark / 2, cy, mark / 2, fill)
+            numberPaint.textAlign = Paint.Align.CENTER
+            c.drawText(number, x + mark / 2, baseline(cy, numberPaint), numberPaint)
+        } else {
+            c.drawText(number, x, baseline(cy, numberPaint), numberPaint)
+        }
+        if (lunar != null && lunarPaint != null) {
+            c.save()
+            c.clipRect(left, top, right, top + px(d.label))
+            c.drawText(lunar, x + numberW + lunarGap, baseline(cy, lunarPaint), lunarPaint)
+            c.restore()
+        }
+    }
+
+    /** 行程色塊：單日用圓角（event-chip），跨日直角接成一條；標題寫在這週的第一格，放不下的切掉。 */
+    private fun chip(c: Canvas, inst: EventInstance, left: Float, right: Float, top: Float, bottom: Float, multiDay: Boolean) {
+        fill.color = Tok.eventColor(inst.color).toArgb()
+        if (multiDay) {
+            c.drawRect(left, top, right, bottom, fill)
+        } else {
+            val r = px(Tok.rXs)
+            c.drawRoundRect(left, top, right, bottom, r, r, fill)
+        }
+        val pad = px(2.dp)
+        val p = text(9f, Tok.onEventColor(inst.color).toArgb(), medium)
+        c.save()
+        c.clipRect(left + pad, top, right - pad, bottom)
+        c.drawText(chipTitle(m, inst), left + pad, baseline((top + bottom) / 2, p), p)
+        c.restore()
+    }
+
+    /** 小工具太矮、放不下色塊時改用色點（WID-01）：最多三個，顏色跟行程一樣。 */
+    private fun dots(c: Canvas, events: List<EventInstance>, left: Float, right: Float, top: Float) {
+        val shown = events.take(3)
+        if (shown.isEmpty()) return
+        val r = px(2.5.dp)
+        val step = r * 2 + px(2.dp)
+        var x = (left + right) / 2 - step * (shown.size - 1) / 2
+        shown.forEach { e ->
+            fill.color = Tok.eventColor(e.color).toArgb()
+            c.drawCircle(x, top + r + px(1.dp), r, fill)
+            x += step
         }
     }
 }
@@ -275,11 +396,10 @@ private fun Header(m: MonthModel) {
 
 private fun shiftMonth(delta: Int): Action = actionRunCallback<ShiftMonthAction>(actionParametersOf(ShiftMonthAction.DELTA to delta))
 
-/** 星期列：照第一列的日期寫（「N 天」從哪天開始都對得上）。 */
+/** 星期列：照第一列的日期寫（「N 天」從哪天開始都對得上）。高度固定成 [GridDims.weekday]，月曆格的圖才算得準。 */
 @Composable
-private fun WeekdayRow(firstRow: List<LocalDate>) {
-    // 高度不寫死：字級放大時才不會被切掉
-    Row(GlanceModifier.fillMaxWidth().padding(vertical = 2.dp)) {
+private fun WeekdayRow(firstRow: List<LocalDate>, d: GridDims) {
+    Row(GlanceModifier.fillMaxWidth().height(d.weekday), verticalAlignment = Alignment.CenterVertically) {
         firstRow.map { Fmt.dowChar(it) }.forEach {
             Text(
                 it,
@@ -289,109 +409,6 @@ private fun WeekdayRow(firstRow: List<LocalDate>) {
             )
         }
     }
-}
-
-/** 一格裡的一條車道要畫什麼。 */
-private sealed interface Piece {
-    /** 行程色塊。跨日行程在格子裡只畫最後一天那段（前面幾天畫在上層 [Bars]），不寫標題。 */
-    class Event(val inst: EventInstance, val multiDay: Boolean) : Piece
-    class More(val n: Int) : Piece
-}
-
-/**
- * 一週：上方一條淡格線，下面七天平分寬度。車道由 WeekLayoutEngine 排好。
- * 跨日行程除了最後一天，都畫在格子上層一整條，蓋過日與日之間的格線；
- * 最後一天那段留在格子裡，右邊照樣留間距、露出格線，跟後面的色塊分開。
- */
-@Composable
-private fun ColumnScope.Week(m: MonthModel, week: List<LocalDate>, spans: List<WeekSpan>, layout: WeekLayout?, d: GridDims, lanes: Int) {
-    // pieces[col][lane]
-    val pieces = Array(week.size) { arrayOfNulls<Piece>(lanes) }
-    layout?.placed?.forEach { p ->
-        pieces[p.startCol + p.span - 1][p.lane] = Piece.Event(m.instances[p.id], multiDay = p.span > 1)
-    }
-    layout?.more?.forEach { (col, n) -> pieces[col][lanes - 1] = Piece.More(n) }
-    val bars = layout?.placed?.filter { it.span > 1 }.orEmpty()
-    Column(GlanceModifier.fillMaxWidth().defaultWeight()) {
-        Spacer(GlanceModifier.fillMaxWidth().height(1.dp).background(Widgets.color(Tok.hairline)))
-        if (bars.isEmpty()) {
-            DayCells(m, week, spans, pieces, d, lanes, GlanceModifier.fillMaxWidth().defaultWeight())
-        } else {
-            Box(GlanceModifier.fillMaxWidth().defaultWeight()) {
-                DayCells(m, week, spans, pieces, d, lanes, GlanceModifier.fillMaxSize())
-                Bars(m, bars, week.size, d)
-            }
-        }
-    }
-}
-
-/** 七天的格子：今天整格鋪淡底、點了開那一天；格子裡是日期與這一天的色塊。 */
-@Composable
-private fun DayCells(m: MonthModel, week: List<LocalDate>, spans: List<WeekSpan>, pieces: Array<Array<Piece?>>, d: GridDims, lanes: Int, modifier: GlanceModifier) {
-    val context = LocalContext.current
-    Row(modifier) {
-        week.forEachIndexed { col, day ->
-            val events = spans.filter { col in it.startCol until it.startCol + it.span }.sortedBy { it.sortKey }.map { m.instances[it.id] }
-            Column(
-                GlanceModifier.defaultWeight().fillMaxHeight()
-                    // 今天整格鋪淡底（重點色疊在底色上），一眼找得到
-                    .then(if (day == m.today) GlanceModifier.background(Widgets.color(Tok.todayTint)) else GlanceModifier)
-                    // 右邊留間距、露出背景的直線，跟隔天的色塊分開
-                    .padding(end = CHIP_GAP)
-                    .clickable(actionStartActivity(Widgets.openDay(context, day)))
-                    .semantics { contentDescription = dayDescription(m, day, events) },
-            ) {
-                DayLabel(m, day, d)
-                if (lanes == 0) {
-                    Dots(events)
-                } else {
-                    // 最後一個有東西的車道之後不放空白，省 view
-                    val cells = pieces[col]
-                    for (lane in 0..cells.indexOfLast { it != null }) LanePiece(m, cells[lane], d.slot)
-                }
-            }
-        }
-    }
-}
-
-/**
- * 跨日行程除了最後一天的部分：一天一段緊接著排，蓋過格線接成一條，標題寫在這週的第一段。
- * 這一層不能點，點下去會落到底下的格子（開那一天）。
- */
-@Composable
-private fun Bars(m: MonthModel, bars: List<PlacedSpan>, cols: Int, d: GridDims) {
-    val byLane = bars.groupBy { it.lane }
-    Column(GlanceModifier.fillMaxWidth()) {
-        var above = d.label // 上面還沒畫的高度：日期列，加上沒有跨日行程的車道
-        for (lane in 0..byLane.keys.max()) {
-            val inLane = byLane[lane]
-            if (inLane == null) {
-                above += d.slot
-                continue
-            }
-            if (above > 0.dp) Spacer(GlanceModifier.height(above))
-            above = 0.dp
-            // 置中對齊、色塊撐滿高度：Row（LinearLayout）預設照文字基線對齊，
-            // 有中文標題的第一段跟空白的後幾段基線不同，後幾段會往下掉幾個像素。
-            // 下面留間距，跟格子裡的車道對齊
-            Row(GlanceModifier.fillMaxWidth().height(d.slot).padding(bottom = CHIP_GAP), verticalAlignment = Alignment.CenterVertically) {
-                for (col in 0 until cols) {
-                    val p = inLane.firstOrNull { col >= it.startCol && col < it.startCol + it.span - 1 }
-                    if (p == null) Spacer(GlanceModifier.defaultWeight()) else BarPiece(m, m.instances[p.id], first = col == p.startCol)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RowScope.BarPiece(m: MonthModel, inst: EventInstance, first: Boolean) {
-    Text(
-        if (first) chipTitle(m, inst) else "",
-        style = TextStyle(color = Widgets.color(Tok.onEventColor(inst.color)), fontSize = 9.sp, fontWeight = FontWeight.Medium),
-        modifier = GlanceModifier.defaultWeight().fillMaxHeight().background(Widgets.color(Tok.eventColor(inst.color))).padding(horizontal = 2.dp),
-        maxLines = 1,
-    )
 }
 
 private fun chipTitle(m: MonthModel, inst: EventInstance): String = if (inst.key in m.alarmOn) "⏰${inst.displayTitle}" else inst.displayTitle
@@ -406,76 +423,6 @@ private fun dayDescription(m: MonthModel, day: LocalDate, events: List<EventInst
         append(L.t("，${events.size} 個行程：", ", ${events.size} events: "))
         append(events.take(5).joinToString(L.t("、", ", ")) { if (it.key in m.alarmOn) L.t("${it.displayTitle}（鬧鐘）", "${it.displayTitle} (alarm)") else it.displayTitle })
         if (events.size > 5) append(L.t(" 等", " and more"))
-    }
-}
-
-@Composable
-private fun DayLabel(m: MonthModel, day: LocalDate, d: GridDims) {
-    val isToday = day == m.today
-    val inMonth = m.month == null || day.month == m.month.month
-    val lunar = m.lunar[day]?.takeIf { it.isNotEmpty() }
-    val number = "${day.dayOfMonth}"
-    Row(GlanceModifier.fillMaxWidth().height(d.label), horizontalAlignment = Alignment.CenterHorizontally, verticalAlignment = Alignment.CenterVertically) {
-        if (isToday) {
-            // 今天：紫色圓（DESIGN.md today-marker），數字放在圓的正中央
-            Box(GlanceModifier.size(d.mark).cornerRadius(Tok.rFull).background(Widgets.color(Tok.primary)), contentAlignment = Alignment.Center) {
-                Text(number, style = TextStyle(color = Widgets.color(Tok.onPrimary), fontSize = 11.sp, fontWeight = FontWeight.Bold), maxLines = 1)
-            }
-        } else {
-            Text(
-                number,
-                style = TextStyle(color = Widgets.color(if (inMonth) Tok.ink else Tok.steel), fontSize = 11.sp, fontWeight = FontWeight.Medium),
-                maxLines = 1,
-            )
-        }
-        if (lunar != null) {
-            val color = when {
-                isToday -> Tok.primary
-                inMonth -> Tok.slate
-                else -> Tok.steel
-            }
-            Text(lunar, style = TextStyle(color = Widgets.color(color), fontSize = 8.sp), modifier = GlanceModifier.padding(start = 2.dp), maxLines = 1)
-        }
-    }
-}
-
-/** 一條車道的一格：行程色塊、「+N」或留白（留白也佔高度，車道才對得齊）。 */
-@Composable
-private fun LanePiece(m: MonthModel, piece: Piece?, slot: Dp) {
-    when (piece) {
-        null -> Spacer(GlanceModifier.fillMaxWidth().height(slot))
-        is Piece.More -> Text(
-            "+${piece.n}",
-            style = TextStyle(color = Widgets.color(Tok.slate), fontSize = 9.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center),
-            modifier = GlanceModifier.fillMaxWidth().height(slot),
-            maxLines = 1,
-        )
-        is Piece.Event -> {
-            val inst = piece.inst
-            // 下面留間距：小工具沒有外距，用外層 Box 的 padding 留，同色的行程上下才不會黏成一片
-            Box(GlanceModifier.fillMaxWidth().height(slot).padding(bottom = CHIP_GAP)) {
-                Text(
-                    if (piece.multiDay) "" else chipTitle(m, inst),
-                    style = TextStyle(color = Widgets.color(Tok.onEventColor(inst.color)), fontSize = 9.sp, fontWeight = FontWeight.Medium),
-                    // 單日行程用圓角（event-chip）；跨日行程直角，接著上層那一條
-                    modifier = GlanceModifier.fillMaxSize()
-                        .then(if (piece.multiDay) GlanceModifier else GlanceModifier.cornerRadius(Tok.rXs))
-                        .background(Widgets.color(Tok.eventColor(inst.color))).padding(horizontal = 2.dp),
-                    maxLines = 1,
-                )
-            }
-        }
-    }
-}
-
-/** 小工具太矮、放不下色塊時改用色點（WID-01）：最多三個，顏色跟行程一樣。 */
-@Composable
-private fun Dots(events: List<EventInstance>) {
-    if (events.isEmpty()) return
-    Row(GlanceModifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        events.take(3).forEach { e ->
-            Text("●", style = TextStyle(color = Widgets.color(Tok.eventColor(e.color)), fontSize = 7.sp), maxLines = 1)
-        }
     }
 }
 
